@@ -336,7 +336,9 @@ mod tests {
         }
         let conn = s.lock().unwrap();
         assert_eq!(
-            query_clips(&conn, "item", 3, 0, false, false).unwrap().len(),
+            query_clips(&conn, "item", 3, 0, false, false)
+                .unwrap()
+                .len(),
             3
         );
     }
@@ -352,9 +354,18 @@ mod tests {
         let p0 = query_clips(&conn, "item", 2, 0, false, false).unwrap();
         let p1 = query_clips(&conn, "item", 2, 2, false, false).unwrap();
         let p2 = query_clips(&conn, "item", 2, 4, false, false).unwrap();
-        assert_eq!(p0.iter().map(|c| c.content.clone()).collect::<Vec<_>>(), ["item4", "item3"]);
-        assert_eq!(p1.iter().map(|c| c.content.clone()).collect::<Vec<_>>(), ["item2", "item1"]);
-        assert_eq!(p2.iter().map(|c| c.content.clone()).collect::<Vec<_>>(), ["item0"]);
+        assert_eq!(
+            p0.iter().map(|c| c.content.clone()).collect::<Vec<_>>(),
+            ["item4", "item3"]
+        );
+        assert_eq!(
+            p1.iter().map(|c| c.content.clone()).collect::<Vec<_>>(),
+            ["item2", "item1"]
+        );
+        assert_eq!(
+            p2.iter().map(|c| c.content.clone()).collect::<Vec<_>>(),
+            ["item0"]
+        );
     }
 
     #[test]
@@ -387,7 +398,10 @@ mod tests {
         } // ロックを解放してから次の lock を取る
 
         let conn = s.lock().unwrap();
-        assert_eq!(query_clips(&conn, "", 100, 0, false, false).unwrap().len(), 2);
+        assert_eq!(
+            query_clips(&conn, "", 100, 0, false, false).unwrap().len(),
+            2
+        );
         let marked = query_clips(&conn, "", 100, 0, true, false).unwrap();
         assert_eq!(marked.len(), 1);
         assert_eq!(marked[0].content, "mark me");
