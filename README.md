@@ -11,6 +11,8 @@ no cloud, no telemetry. See [Privacy](#privacy).
 
 > kopipe is Windows‑only (it relies on Win32 clipboard APIs).
 
+![kopipe main window showing clipboard history](assets/screenshot.png)
+
 ## Features
 
 - **Private by design**: history lives only on your machine — nothing is uploaded
