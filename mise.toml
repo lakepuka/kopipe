@@ -1,0 +1,7 @@
+# Project toolchain for kopipe (Tauri 2 + React + Rust).
+# Pins the versions verified working on 2026-06-16 so the repo is reproducible.
+# `mise install` in this dir installs/activates these.
+[tools]
+node = "24"
+pnpm = "11.6"
+rust = "1.96"

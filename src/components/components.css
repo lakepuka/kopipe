@@ -1,0 +1,221 @@
+/* 上部バー（ドラッグ移動・検索・トグル・ウィンドウ操作を一体化）。 */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 40px;
+  flex-shrink: 0;
+  margin: -6px -6px 6px -6px;
+  padding: 0 6px;
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+.brand {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.5;
+  padding: 0 8px 0 4px;
+}
+/* brand と検索の間の余白＝ドラッグ専用ゾーン。ここを広く取って移動を掴みやすくする。 */
+.drag-spacer {
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-width: 16px;
+}
+/* 検索は右寄せの固定幅ピル。掴める余白と区別でき、見た目も検索欄だと分かる。 */
+.search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 1 265px;
+  min-width: 130px;
+  height: 26px;
+  padding: 0 3px 0 9px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  transition:
+    background 0.12s,
+    box-shadow 0.12s;
+}
+.search-wrap:focus-within {
+  background: color-mix(in srgb, var(--fg) 11%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.search-icon {
+  display: block;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+.search {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: inherit;
+}
+.search:focus {
+  outline: none;
+  border: none;
+}
+.search::placeholder {
+  color: color-mix(in srgb, var(--fg) 38%, transparent);
+}
+/* 入力欄の中に収める小さめトグル（正規表現・ブックマーク）。 */
+.affix-btn {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  border-radius: 5px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--fg) 50%, transparent);
+}
+.affix-btn:hover {
+  color: var(--fg);
+  background-color: var(--hover);
+}
+.affix-btn.toggled {
+  color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.affix-btn.bookmark.toggled {
+  color: var(--bookmark);
+  background-color: color-mix(in srgb, var(--bookmark) 16%, transparent);
+}
+
+/* カスタムタイトルバー（設定ウィンドウ用）。 */
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+  flex-shrink: 0;
+  margin: -6px -6px 8px -6px;
+  padding: 0 6px 0 12px;
+  user-select: none;
+}
+.titlebar-title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.6;
+}
+
+/* 初回オンボーディング。固定サイズのカードを header(ステップ)/body/footer に分け、
+   どのステップ・言語でも枠とボタン位置が動かないようにまとめる。 */
+.onboard {
+  display: flex;
+  flex-direction: column;
+  width: min(88vw, 380px);
+  height: 300px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+.onboard-dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  padding-top: 16px;
+}
+.onboard-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--fg) 22%, transparent);
+  transition: background-color 0.15s ease;
+}
+.onboard-dot.active {
+  background-color: var(--accent);
+}
+.onboard-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  padding: 8px 24px;
+  /* タイトルは text-align で中央寄せ。子は全幅にして本文の左揃えを自然に見せる。 */
+  text-align: center;
+}
+.onboard-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+.onboard-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-line;
+  opacity: 0.85;
+  /* 中央揃えだと行端がギザギザになるため左揃えにする。 */
+  text-align: left;
+}
+.onboard-footer {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 22px 20px;
+}
+.onboard-langs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: fit-content;
+  margin: 0 auto;
+}
+.onboard-langs label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  cursor: pointer;
+  font-size: 14px;
+}
+/* オンボーディングのボタン（主＝アクセント／副＝枠線）。 */
+.onboard-btn {
+  border: none;
+  border-radius: 7px;
+  padding: 8px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bg);
+  background-color: var(--accent);
+}
+.onboard-btn:hover {
+  border: none;
+  filter: brightness(1.08);
+}
+.onboard-btn.secondary {
+  color: inherit;
+  background: none;
+  border: 1px solid var(--border);
+}
+.onboard-btn.secondary:hover {
+  border-color: var(--accent);
+  background-color: var(--hover);
+}
+
+/* Web タブ：sandbox iframe で HTML を描画（スクリプト実行なし）。 */
+.source-modal-web {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border: none;
+  background: #fff;
+}
+

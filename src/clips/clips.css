@@ -1,0 +1,204 @@
+/* 履歴リストと行。番号・ゼブラは廃し、ホバーで操作ボタンを出す。 */
+.clip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.clip-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
+  border-radius: 6px;
+  overflow: hidden;
+  /* 行はクリック＝ペースト。文字選択は不要なので無効化（全文表示は別モーダルで可）。 */
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* 複数行表示でも行の境目が分かるよう、うっすらした区切り線を入れる（最終行は除く）。 */
+.clip-row:not(:last-child) {
+  border-bottom: 1px solid color-mix(in srgb, var(--fg) 7%, transparent);
+}
+.clip-row:hover {
+  background-color: var(--hover);
+}
+/* ブックマークの目印。右上角に青い折り込みリボン（コーナー三角）。 */
+.clip-row.bookmark::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-top: 11px solid var(--bookmark);
+  border-left: 11px solid transparent;
+}
+.clip-body {
+  flex: 1;
+  min-width: 0;
+  /* バッジとテキストの行ボックス高さを揃える基準。 */
+  line-height: 20px;
+}
+/* 行の先頭バッジ（種別表示＋クリックで中身確認）。控えめにして馴染ませる。 */
+.row-badge {
+  flex-shrink: 0;
+  border: none;
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  /* テキストと同じ行ボックス(20px)にして 1 行目にぴったり揃える。 */
+  line-height: 20px;
+  padding: 0 5px;
+  border-radius: 4px;
+  color: color-mix(in srgb, var(--fg) 50%, transparent);
+  background-color: color-mix(in srgb, var(--fg) 9%, transparent);
+  transition:
+    color 0.12s,
+    background-color 0.12s;
+}
+.row-badge:hover {
+  border: none;
+  color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.clip-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+/* 行内のアイコンは小さめにして行高を抑える。 */
+.clip-actions .icon-btn {
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+}
+.clip-row:hover .clip-actions,
+.clip-row.menu-open .clip-actions {
+  opacity: 1;
+}
+.clip-copied {
+  align-self: center;
+  color: limegreen;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* 詳細メニュー（フローティングパネル）。 */
+.context-menu {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  padding: 4px;
+}
+.context-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 400;
+  color: inherit;
+}
+.context-menu button:hover {
+  border: none;
+  background-color: color-mix(in srgb, var(--fg) 12%, transparent);
+}
+
+/* テキスト/HTML ソースのビューワーモーダル。 */
+.source-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(80vw, 720px);
+  max-height: 80vh;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+/* タブ切替時に高さが変わって上下に動かないよう、HTML 付きは高さを固定する。 */
+.source-modal.tabbed {
+  height: 70vh;
+}
+.source-modal-tabs {
+  flex-shrink: 0;
+  display: flex;
+  gap: 2px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.source-tab {
+  border: none;
+  background: none;
+  border-radius: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--fg) 55%, transparent);
+}
+.source-tab:hover {
+  border: none;
+  background-color: var(--hover);
+}
+.source-tab.active {
+  color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.source-modal-body {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+/* 編集可能なビュー本体（プレーン / HTML ソース）。共通の input スタイルは
+   textarea には当たらないので、配色・枠・リサイズをここで明示する。 */
+textarea.source-modal-body {
+  box-sizing: border-box;
+  width: 100%;
+  /* タブの無いプレーン専用モーダルでも十分な編集領域を確保する。 */
+  min-height: 40vh;
+  border: none;
+  border-radius: 0;
+  resize: none;
+  color: var(--fg);
+  background: transparent;
+  outline: none;
+}
+.source-modal-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px;
+  border-top: 1px solid var(--border);
+}
+/* 主アクションなのでアクセント色で塗る。 */
+.source-paste-btn {
+  font-weight: 600;
+  color: var(--bg);
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+.source-paste-btn:hover {
+  border-color: var(--accent);
+  filter: brightness(1.08);
+}
+

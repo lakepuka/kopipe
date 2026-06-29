@@ -1,0 +1,51 @@
+{
+  "name": "kopipe",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.6.0",
+  "description": "A lightweight, fully local Windows clipboard-history app",
+  "license": "MIT",
+  "author": "lakepuka",
+  "homepage": "https://github.com/lakepuka/kopipe",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lakepuka/kopipe.git"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "check": "tsc --noEmit",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint src",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "seed": "cargo run --manifest-path src-tauri/Cargo.toml --bin seed --",
+    "verify": "pnpm format:check && pnpm lint && pnpm check && pnpm test"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-autostart": "^2.5.1",
+    "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
+    "@tauri-apps/plugin-dialog": "~2.7.1",
+    "@tauri-apps/plugin-global-shortcut": "~2.3.2",
+    "@tauri-apps/plugin-opener": "^2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.1",
+    "@tauri-apps/cli": "^2",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "jsdom": "^29.1.1",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.4",
+    "vitest": "^4.1.9"
+  }
+}

@@ -1,0 +1,45 @@
+[package]
+name = "kopipe"
+version = "0.1.0"
+description = "A lightweight, fully local Windows clipboard-history app"
+authors = ["lakepuka"]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/lakepuka/kopipe"
+# seed バイナリを追加したため `cargo run` の対象が曖昧になる。本体を既定にする
+# （seed は `cargo run --bin seed` / `pnpm run seed` で明示的に呼ぶ）。
+default-run = "kopipe"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "kopipe_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.40.1", features = ["bundled"] }
+tauri-plugin-clipboard-manager = "2.3.2"
+regex = "1.12.4"
+png = "0.18.1"
+base64 = "0.22.1"
+tauri-plugin-dialog = "2"
+tauri-plugin-autostart = "2.5.1"
+tauri-plugin-window-state = "2.4.1"
+blake3 = "1.8.5"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-global-shortcut = "2"
+
+[target."cfg(windows)".dependencies]
+windows = { version = "0.61", features = ["Win32_Foundation", "Win32_System_DataExchange", "Win32_System_LibraryLoader", "Win32_System_Memory", "Win32_System_Threading", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging"] }
+

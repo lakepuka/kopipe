@@ -1,0 +1,223 @@
+/* 設定ウィンドウ（枠なし）。上部は不透明なドラッグ帯（場所を確保し、本文・
+   スクロールバーはその下から始まる）。閉じるボタンは右上に固定する。 */
+.settings-window {
+  padding: 0;
+  /* 設定は UI なのでラベル等のテキスト選択を無効化（入力欄は既定で編集可）。 */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 保存先パスはコピーしたいので選択可に戻す。 */
+.path-box {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.settings-dragbar {
+  flex-shrink: 0;
+  height: 32px;
+}
+
+.settings-close {
+  position: fixed;
+  top: 5px;
+  right: 6px;
+  z-index: 10;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--fg) 55%, transparent);
+}
+
+.settings-close:hover {
+  border: none;
+  color: var(--fg);
+  background-color: var(--hover);
+}
+
+/* 設定画面。セクションをカード化して整然と見せる。 */
+.settings-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 14px 16px;
+}
+
+.section {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  margin: 0 0 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  /* 行ごとの高さをそろえて選択肢を等間隔に見せる（録ボタンで高くならないように）。 */
+  min-height: 26px;
+}
+
+/* 呼び出し方法の「キーの組み合わせ」録ボタン。行高を崩さないようコンパクトに。 */
+.combo-btn {
+  margin-left: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.combo-btn.recording {
+  border-color: var(--accent);
+}
+
+.muted {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.align-right-control {
+  margin-left: auto;
+  text-align: right;
+}
+
+.mono-value {
+  font-family: monospace;
+}
+
+.limit-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.limit-input {
+  width: 70px;
+}
+
+.limit-hint {
+  margin: 0 0 12px;
+}
+
+.confirm-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.danger-btn {
+  color: tomato;
+}
+
+.data-action-btn {
+  align-self: flex-start;
+}
+
+/* テーマ選択：色見本付きの 2 列カード。 */
+.theme-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.theme-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  text-align: left;
+  font-weight: 400;
+}
+
+.theme-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background-color: var(--hover);
+}
+
+.theme-card.selected {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.theme-swatch {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.theme-swatch-dot {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.theme-card-label {
+  font-size: 12px;
+  line-height: 1.3;
+  min-width: 0;
+}
+
+/* ラベル＝左 / 値・操作＝右 のフィールド行。 */
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.path-box {
+  font-family: monospace;
+  font-size: 12px;
+  word-break: break-all;
+  background-color: color-mix(in srgb, var(--fg) 6%, transparent);
+  border-radius: 6px;
+  padding: 7px 9px;
+  margin: 0 0 12px;
+}
+
+.app-version {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 11px;
+  opacity: 0.4;
+}
