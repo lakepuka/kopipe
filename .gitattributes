@@ -1,0 +1,8 @@
+# どの OS でも LF で取得・正規化する。Windows ランナー(core.autocrlf=true)でも
+# CRLF にせず、Biome のフォーマット検査(LF 前提)が CI で一致するようにする。
+* text=auto eol=lf
+
+# バイナリ資産は改行変換の対象外にする。
+*.png binary
+*.ico binary
+*.icns binary
