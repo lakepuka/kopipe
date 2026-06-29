@@ -1,5 +1,7 @@
 # kopipe
 
+[![CI](https://github.com/lakepuka/kopipe/actions/workflows/ci.yml/badge.svg)](https://github.com/lakepuka/kopipe/actions/workflows/ci.yml)
+
 A lightweight, **fully local** Windows clipboard‑history app. kopipe lives in the
 system tray, records what you copy (text, files/folders, and images), and lets
 you paste any past item back — fast. Double‑tap **Shift** to summon it anywhere.
