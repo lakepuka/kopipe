@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/icon.png" alt="kopipe app icon" width="120" height="120">
+</p>
+
 # kopipe
 
 [![CI](https://github.com/lakepuka/kopipe/actions/workflows/ci.yml/badge.svg)](https://github.com/lakepuka/kopipe/actions/workflows/ci.yml)
