@@ -40,6 +40,19 @@ Requirements: Windows 10/11. The WebView2 runtime is preinstalled on Windows 11
 > The installer isn't code‑signed yet, so Windows SmartScreen may warn
 > "unknown publisher". Choose **More info → Run anyway**.
 
+### Verify your download (optional)
+
+Because the installer isn't signed, you can confirm it wasn't tampered with by
+checking its SHA‑256 checksum against the value published in each release's notes:
+
+```powershell
+PS> (Get-FileHash .\kopipe_0.1.0_x64-setup.exe -Algorithm SHA256).Hash
+A28367D24A0A13DEA73297C7608FA0E795559C57591DBC652FCF76FCA4BF393D
+```
+
+The output must match the `SHA‑256` listed for that release (the value above is
+for v0.1.0).
+
 ## Usage
 
 - **Shift × 2**: show / hide the window (configurable in Settings)
