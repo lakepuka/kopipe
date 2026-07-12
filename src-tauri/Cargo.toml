@@ -1,6 +1,6 @@
 [package]
 name = "kopipe"
-version = "0.1.1"
+version = "0.1.2"
 description = "A lightweight, fully local Windows clipboard-history app"
 authors = ["lakepuka"]
 edition = "2021"
