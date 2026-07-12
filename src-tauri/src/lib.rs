@@ -102,6 +102,13 @@ pub fn run() {
                 // 保存済みのピン留め設定を反映。
                 system::window::init_pin(app.handle());
 
+                // 起動直後は main が visible:false でも is_visible() が true を返すことがあり、
+                // 初回のダブルタップが「表示」ではなく「非表示」に化ける。一度明示的に隠して
+                // 状態を確定させ、最初のトグルから確実に表示されるようにする。
+                if let Some(win) = app.get_webview_window(system::window::MAIN) {
+                    let _ = win.hide();
+                }
+
                 // 本当の初回起動だけ、トレイ常駐ではなくメインウィンドウを表示する
                 // （初期設定プロンプトをフロントが出す）。以降の起動・スタートアップでは隠したまま。
                 let first_run =
