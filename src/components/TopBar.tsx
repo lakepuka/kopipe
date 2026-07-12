@@ -51,6 +51,32 @@ export function TopBar({
           onChange={(e) => onQueryChange(e.currentTarget.value)}
           placeholder={useRegex ? t("search_placeholder_regex") : t("search_placeholder")}
         />
+        {/* 入力があるときだけ表示するクリアボタン。入力のフォーカスは保つ。 */}
+        {query && (
+          <button
+            type="button"
+            className="affix-btn"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => onQueryChange("")}
+            title={t("clear_search")}
+            aria-label={t("clear_search")}
+          >
+            <svg
+              viewBox="0 0 16 16"
+              width="12"
+              height="12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              aria-hidden
+            >
+              <title>{t("clear_search")}</title>
+              <line x1="4" y1="4" x2="12" y2="12" />
+              <line x1="12" y1="4" x2="4" y2="12" />
+            </svg>
+          </button>
+        )}
         {/* 検索条件のトグルは入力欄の中（末尾）に収める。 */}
         <button
           type="button"
