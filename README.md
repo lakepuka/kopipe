@@ -6,12 +6,15 @@
 
 [![CI](https://github.com/lakepuka/kopipe/actions/workflows/ci.yml/badge.svg)](https://github.com/lakepuka/kopipe/actions/workflows/ci.yml)
 
-A lightweight, **fully local** Windows clipboard‑history app. kopipe lives in the
-system tray, records what you copy (text, files/folders, and images), and lets
-you paste any past item back — fast. Double‑tap **Shift** to summon it anywhere.
+A **fast, sleek**, fully local clipboard‑history app for Windows. kopipe
+sits quietly in the tray, instantly captures everything you copy (text,
+files/folders, and images), and pastes any past item back in a snap. Double‑tap
+**Shift** to summon it anywhere.
 
 Your clipboard is sensitive, so kopipe keeps everything on your PC: no account,
 no cloud, no telemetry. See [Privacy](#privacy).
+
+kopipe（コピペ）は、**おしゃれでサクサク動く** Windows のクリップボード履歴アプリ。コピーしたテキスト・ファイル・画像を片っ端から自動で記録し、**Shift** 2回でパッと呼び出してサッと貼り付け。しかも全部あなたの PC の中だけで完結します。
 
 > kopipe is Windows‑only (it relies on Win32 clipboard APIs).
 
