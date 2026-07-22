@@ -1,7 +1,7 @@
 {
   "name": "kopipe",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.2.0",
   "packageManager": "pnpm@11.6.0",
   "description": "A lightweight, fully local Windows clipboard-history app",
   "license": "MIT",
