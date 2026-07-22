@@ -61,6 +61,38 @@ function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [onboarding, source, previewSrc, menu]);
 
+  // ↑↓ で履歴リストを移動する。検索欄や本体にフォーカスがある状態で ↓ を押すと
+  // 先頭行へ、先頭行で ↑ を押すと検索欄へ戻る。Enter でのペーストは各行側で処理。
+  useEffect(() => {
+    const onArrow = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      // モーダル／メニュー／オンボーディング表示中はリスト移動しない。
+      if (onboarding || menu || previewSrc || source) return;
+      const rows = Array.from(document.querySelectorAll<HTMLElement>(".clip-row"));
+      if (rows.length === 0) return;
+      const active = document.activeElement as HTMLElement | null;
+      const idx = active ? rows.indexOf(active) : -1;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (idx === -1) rows[0].focus();
+        else if (idx < rows.length - 1) rows[idx + 1].focus();
+      } else {
+        // ArrowUp
+        if (idx > 0) {
+          e.preventDefault();
+          rows[idx - 1].focus();
+        } else if (idx === 0) {
+          e.preventDefault();
+          document.querySelector<HTMLElement>(".search")?.focus();
+        }
+        // 検索欄など（idx === -1）ではキャレット移動を邪魔しない。
+      }
+    };
+    window.addEventListener("keydown", onArrow);
+    return () => window.removeEventListener("keydown", onArrow);
+  }, [onboarding, menu, previewSrc, source]);
+
   // ウィンドウがフォーカスを得た直後の最初のクリックは「アクティブ化のためのクリック」とみなし、
   // 行クリック等に伝えない。設定ウィンドウを出した状態でメインをクリックしたときは、
   // 設定が閉じるだけで、メイン側は押されたことにならない。
