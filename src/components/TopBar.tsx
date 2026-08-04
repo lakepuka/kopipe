@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import { useT } from "../i18n";
@@ -22,6 +23,7 @@ export function TopBar({
 }) {
   const t = useT();
   const win = getCurrentWindow();
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="topbar" data-tauri-drag-region>
       <span className="brand" data-tauri-drag-region>
@@ -46,6 +48,7 @@ export function TopBar({
           <line x1="10.5" y1="10.5" x2="14" y2="14" />
         </svg>
         <input
+          ref={inputRef}
           className="search"
           value={query}
           onChange={(e) => onQueryChange(e.currentTarget.value)}
@@ -56,8 +59,10 @@ export function TopBar({
           <button
             type="button"
             className="affix-btn"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => onQueryChange("")}
+            onClick={() => {
+              onQueryChange("");
+              inputRef.current?.focus();
+            }}
             title={t("clear_search")}
             aria-label={t("clear_search")}
           >
