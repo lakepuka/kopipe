@@ -179,6 +179,9 @@ export function useSettingsState() {
     try {
       if (value) await enable();
       else await disable();
+      // OS 側の設定は上書き再インストールで消えることがあるので、希望状態も控えておく
+      // （次回起動時に Rust 側が照合して復元する）。
+      saveSetting(SETTING_KEYS.autostart, value ? "true" : "false");
     } catch (e) {
       console.error(e);
       isEnabled()

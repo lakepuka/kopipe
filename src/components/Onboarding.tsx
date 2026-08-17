@@ -31,6 +31,8 @@ export function Onboarding({ onFinish }: { onFinish: () => void }) {
         // 自動起動の可否は致命的でないので無視。
       }
     }
+    // 希望状態も控える（上書き再インストールで OS 側が消えたとき Rust が復元する）。
+    saveSetting(SETTING_KEYS.autostart, enableAutostart ? "true" : "false");
     saveSetting(SETTING_KEYS.autostartPrompted, "true");
     onFinish();
   }

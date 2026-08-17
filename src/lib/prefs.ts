@@ -11,6 +11,9 @@ export const SETTING_KEYS = {
   pinned: "pinned",
   imageDir: "image_dir",
   imageLimitMb: "image_limit_mb",
+  // 自動起動の希望状態。OS 側（レジストリ）は上書き再インストールで消えることがあるため、
+  // 控えを持って Rust 側（system::autostart）が起動時に復元する。
+  autostart: "autostart",
   autostartPrompted: "autostart_prompted",
   updateCheck: "update_check",
 } as const;
