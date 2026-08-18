@@ -94,6 +94,7 @@ const dict = {
     update_hint: "GitHub で最新版を確認します（kopipe で唯一の外部通信）。",
     update_available: "新しいバージョンが利用できます：",
     update_get: "入手",
+    other_apps: "lakepuka の他のアプリを見る",
   },
   en: {
     settings: "Settings",
@@ -182,6 +183,7 @@ const dict = {
     update_hint: "Checks GitHub for the latest version (kopipe's only network request).",
     update_available: "A new version is available:",
     update_get: "Get it",
+    other_apps: "See other apps by lakepuka",
   },
 } as const;
 

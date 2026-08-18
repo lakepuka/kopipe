@@ -5,6 +5,7 @@ import { buildAccelerator, describeShortcut } from "./shortcut";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import { formatBytes } from "../lib/format";
+import { openExternal } from "../services/api";
 import { type Lang, type TKey, useT } from "../i18n";
 import { useSettingsState } from "./useSettingsState";
 
@@ -365,6 +366,12 @@ export default function Settings() {
           </div>
         </section>
 
+        {/* 作者サイトへの導線。設定項目には見せず、フッターの控えめなリンクにする。 */}
+        <p className="site-link">
+          <button type="button" onClick={() => openExternal("https://lakepuka.com")}>
+            {t("other_apps")}
+          </button>
+        </p>
         <p className="app-version">kopipe{version && ` v${version}`}</p>
       </div>
     </main>

@@ -221,3 +221,34 @@
   font-size: 11px;
   opacity: 0.4;
 }
+
+/* 作者サイトへの導線。設定項目に見えないよう、フッターの控えめなテキストリンクにする。 */
+.site-link {
+  margin: 22px 0 0;
+  text-align: center;
+}
+
+.site-link button {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.45;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.site-link button:hover {
+  opacity: 0.8;
+  color: var(--accent);
+}
+
+.site-link button:active {
+  background: none;
+}
+
+/* リンクの直下に置くのでバージョン表記は詰める。 */
+.site-link + .app-version {
+  margin-top: 6px;
+}
