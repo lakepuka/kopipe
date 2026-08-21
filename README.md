@@ -41,7 +41,8 @@ Requirements: Windows 10/11. The WebView2 runtime is preinstalled on Windows 11
 (the installer fetches it automatically if missing).
 
 > The installer isn't code‑signed yet, so Windows SmartScreen may warn
-> "unknown publisher". Choose **More info → Run anyway**.
+> "unknown publisher". Choose **More info → Run anyway**. We're working on
+> getting releases signed — see [`docs/code-signing-policy.md`](docs/code-signing-policy.md).
 
 ### Verify your download (optional)
 
@@ -75,6 +76,13 @@ kopipe makes no network connections during normal use.
 > Settings → Updates) contacts GitHub once on launch to compare version numbers
 > and shows a notice if a newer release exists. Nothing from your clipboard is
 > ever transmitted, and you can turn it off.
+
+## Contributing
+
+Bug reports and pull requests are welcome. This project follows the
+[Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). For
+vulnerability reports, see [`SECURITY.md`](SECURITY.md) instead of opening a
+public issue.
 
 ## Build from source
 
