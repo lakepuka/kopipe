@@ -14,6 +14,14 @@ const PASTE_DELAY_MS: u64 = 120;
 #[tauri::command]
 pub fn paste_clip(content: String, html: Option<String>, app: AppHandle) -> Result<(), String> {
     set_clipboard_text(&app, &content, html.as_deref())?;
+
+    // クリップボード監視の再検知（最大 POLL_INTERVAL_MS 遅延）を待たず、record_text を
+    // その場で呼んで先頭へ昇格させる（自動保存と同じ「同一内容なら削除して入れ直す」ロジック）。
+    let state = app.state::<crate::db::AppState>();
+    if crate::clips::record_text(&state, &content, html.as_deref())? {
+        let _ = app.emit("clips-changed", ());
+    }
+
     finish_paste(&app);
     Ok(())
 }
@@ -59,12 +67,18 @@ fn set_clipboard_text(app: &AppHandle, content: &str, html: Option<&str>) -> Res
 pub fn paste_image(id: i64, app: AppHandle) -> Result<(), String> {
     use tauri::image::Image;
 
-    let path = crate::image_storage::image_path(&app.state::<crate::db::AppState>(), id)?;
+    let state = app.state::<crate::db::AppState>();
+    let (path, hash) = crate::image_storage::image_path_and_hash(&state, id)?;
     let (rgba, w, h) = decode_png(&path)?;
 
     app.clipboard()
         .write_image(&Image::new_owned(rgba, w, h))
         .map_err(|e| e.to_string())?;
+
+    // クリップボード監視の再検知（最大 POLL_INTERVAL_MS 遅延）を待たず、record_image を
+    // その場で呼んで先頭へ昇格させる（自動保存と同じ「同一ハッシュなら削除して入れ直す」ロジック）。
+    crate::clips::record_image(&state, &path, &hash)?;
+    let _ = app.emit("clips-changed", ());
 
     finish_paste(&app);
     Ok(())

@@ -15,6 +15,18 @@ pub fn image_path(state: &AppState, id: i64) -> Result<String, String> {
     .map_err(|e| e.to_string())
 }
 
+/// 指定 id の画像ファイルパスとハッシュを返す（画像行のみ）。
+/// 「履歴から貼り付け」でその場で record_image を呼び直す（＝先頭へ昇格）ために使う。
+pub fn image_path_and_hash(state: &AppState, id: i64) -> Result<(String, String), String> {
+    let conn = state.lock()?;
+    conn.query_row(
+        "SELECT image_path, hash FROM clips WHERE id = ?1 AND kind = 'image'",
+        [id],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    )
+    .map_err(|e| e.to_string())
+}
+
 /// 画像をデータURL（data:image/png;base64,...）にして返す。フロントの <img src> 用。
 #[tauri::command]
 pub fn image_data_url(id: i64, state: State<AppState>) -> Result<String, String> {
