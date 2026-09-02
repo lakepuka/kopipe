@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Code / エージェント関連
+# .claude/rules と CLAUDE.md・AGENTS.md は共有するのでコミットする。
+# 個人設定と実行時に作られる一時ファイルだけ除外する。
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
