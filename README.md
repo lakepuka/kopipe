@@ -9,12 +9,12 @@
 A **fast, sleek**, fully local clipboard‑history app for Windows. kopipe
 sits quietly in the tray, instantly captures everything you copy (text,
 files/folders, and images), and pastes any past item back in a snap. Double‑tap
-**Shift** to summon it anywhere.
+**Ctrl** to summon it anywhere.
 
 Your clipboard is sensitive, so kopipe keeps everything on your PC: no account,
 no cloud, no telemetry. See [Privacy](#privacy).
 
-kopipe（コピペ）は、**おしゃれでサクサク動く** Windows のクリップボード履歴アプリ。コピーしたテキスト・ファイル・画像を片っ端から自動で記録し、**Shift** 2回でパッと呼び出してサッと貼り付け。しかも全部あなたの PC の中だけで完結します。
+kopipe（コピペ）は、**おしゃれでサクサク動く** Windows のクリップボード履歴アプリ。コピーしたテキスト・ファイル・画像を片っ端から自動で記録し、**Ctrl** 2回でパッと呼び出してサッと貼り付け。しかも全部あなたの PC の中だけで完結します。
 
 > kopipe is Windows‑only (it relies on Win32 clipboard APIs).
 
@@ -26,7 +26,7 @@ kopipe（コピペ）は、**おしゃれでサクサク動く** Windows のク�
 - Automatic clipboard history: text, files/folders (`CF_HDROP`), images (PNG)
 - Rich text: keeps HTML so links/formatting survive a paste; view Plain / HTML / Web
 - Bookmark items, regex / keyword search, deduplicated history
-- Summon with a double‑tap of Shift (or Ctrl, or a custom shortcut)
+- Summon with a double‑tap of Ctrl (or Shift, or a custom shortcut)
 - Themes, English / 日本語, optional launch at PC login (runs in the tray)
 
 ## Install
@@ -35,7 +35,7 @@ kopipe（コピペ）は、**おしゃれでサクサク動く** Windows のク�
    [Releases page](https://github.com/lakepuka/kopipe/releases).
 2. Run the installer.
 3. On first launch a short setup guide appears (language, welcome, optional
-   auto‑start). After that kopipe stays in the tray — press **Shift twice** to open it.
+   auto‑start). After that kopipe stays in the tray — press **Ctrl twice** to open it.
 
 Requirements: Windows 10/11. The WebView2 runtime is preinstalled on Windows 11
 (the installer fetches it automatically if missing).
@@ -62,7 +62,7 @@ for v0.1.0).
 
 ## Usage
 
-- **Shift × 2**: show / hide the window (configurable in Settings)
+- **Ctrl × 2**: show / hide the window (configurable in Settings)
 - **Click a row**: paste it into the app you were just using
 - **Right‑click a row** (or the ⋮ button): view, copy, paste as plain text,
   bookmark, delete

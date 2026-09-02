@@ -2,8 +2,8 @@
 
 use tauri::{AppHandle, Emitter, Manager};
 
-/// 既定の呼び出しトリガー。"double:Shift" = Shift の2回連続。
-const DEFAULT_SHORTCUT: &str = "double:Shift";
+/// 既定の呼び出しトリガー。"double:Control" = Ctrl の2回連続。
+const DEFAULT_SHORTCUT: &str = "double:Control";
 
 /// 呼び出しトリガーを登録する。
 /// - "double:Shift" / "double:Control" … 修飾キー2回（低レベルフックで検出）

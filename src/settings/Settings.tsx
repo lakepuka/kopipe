@@ -186,19 +186,19 @@ export default function Settings() {
               <input
                 type="radio"
                 name="trigger"
-                checked={shortcut === "double:Shift"}
-                onChange={() => saveShortcut("double:Shift")}
+                checked={shortcut === "double:Control"}
+                onChange={() => saveShortcut("double:Control")}
               />
-              {t("trigger_double_shift")}
+              {t("trigger_double_ctrl")}
             </label>
             <label>
               <input
                 type="radio"
                 name="trigger"
-                checked={shortcut === "double:Control"}
-                onChange={() => saveShortcut("double:Control")}
+                checked={shortcut === "double:Shift"}
+                onChange={() => saveShortcut("double:Shift")}
               />
-              {t("trigger_double_ctrl")}
+              {t("trigger_double_shift")}
             </label>
             <label>
               <input

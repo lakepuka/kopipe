@@ -49,7 +49,7 @@ const dict = {
     enable: "有効にする",
     help_title: "kopipe へようこそ",
     help_body:
-      "kopipe はコピー＆ペーストの履歴ツールです。コピーした内容が自動でたまり、すぐに貼り付けられます。\n\n初期設定では Shift キーを2回押すと、いつでも呼び出せます。",
+      "kopipe はコピー＆ペーストの履歴ツールです。コピーした内容が自動でたまり、すぐに貼り付けられます。\n\n初期設定では Ctrl キーを2回押すと、いつでも呼び出せます。",
     help_ok: "はじめる",
     launch_at_startup: "PC ログイン時から履歴の記録を開始（トレイに常駐）",
     autostart_prompt_title: "PC ログイン時に常駐起動",
@@ -138,7 +138,7 @@ const dict = {
     enable: "Enable",
     help_title: "Welcome to kopipe",
     help_body:
-      "kopipe is a copy & paste history tool. Everything you copy is saved automatically and ready to paste.\n\nBy default, double-tap Shift to open it anytime.",
+      "kopipe is a copy & paste history tool. Everything you copy is saved automatically and ready to paste.\n\nBy default, double-tap Ctrl to open it anytime.",
     help_ok: "Get started",
     launch_at_startup: "Record history from PC login (runs in tray)",
     autostart_prompt_title: "Run at PC login",

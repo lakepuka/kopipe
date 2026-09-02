@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 
-// Rust 側 DEFAULT_SHORTCUT と揃える。"double:Shift" = Shift の2回連続。
-export const DEFAULT_SHORTCUT = "double:Shift";
+// Rust 側 DEFAULT_SHORTCUT と揃える。"double:Control" = Ctrl の2回連続。
+export const DEFAULT_SHORTCUT = "double:Control";
 
 // 修飾キー単体の code（これらだけ押されても確定しない）。
 const MODIFIER_CODES = new Set([
