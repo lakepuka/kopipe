@@ -41,8 +41,7 @@ Requirements: Windows 10/11. The WebView2 runtime is preinstalled on Windows 11
 (the installer fetches it automatically if missing).
 
 > The installer isn't code‑signed yet, so Windows SmartScreen may warn
-> "unknown publisher". Choose **More info → Run anyway**. We're working on
-> getting releases signed — see [`docs/code-signing-policy.md`](docs/code-signing-policy.md).
+> "unknown publisher". Choose **More info → Run anyway**.
 
 ### Verify your download (optional)
 

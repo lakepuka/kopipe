@@ -1,9 +1,8 @@
 # Code Signing Policy
 
 This document describes how kopipe's release binaries are built, verified,
-and (once approved) signed. It is written primarily for the
-[SignPath Foundation](https://signpath.org/) application and for anyone
-auditing the release process.
+and (in the future) signed. It exists for anyone auditing the release
+process, and as reference material for a future code signing application.
 
 ## What gets signed
 
@@ -51,16 +50,22 @@ No other artifacts (dev builds, forks, pull-request builds) are signed.
 
 - Only the repository owner ([@lakepuka](https://github.com/lakepuka)) has
   write access to `main` and publishes releases.
-- Signing credentials (once granted by SignPath) will be used exclusively
-  from the maintainer's release process; they are never committed to the
-  repository or exposed in CI logs.
+- Signing credentials (once obtained) will be used exclusively from the
+  maintainer's release process; they are never committed to the repository
+  or exposed in CI logs.
 
 ## Roadmap toward fully automated, signed releases
 
 Release builds are currently produced locally by the maintainer rather than
-in CI. Moving the release build (and, once approved, the signing step) into
-a dedicated GitHub Actions release workflow — triggered on version tags — is
+in CI. Moving the release build (and, eventually, a signing step) into a
+dedicated GitHub Actions release workflow — triggered on version tags — is
 planned, to make the chain from source to signed artifact fully auditable.
+
+A first application to a free OSS code signing program was declined; the
+main gaps cited were project reputation and track record of continuous
+maintenance. Re-applying (there or elsewhere) is a future goal once kopipe
+has a longer release history, but isn't being announced in release notes or
+the README until it actually succeeds.
 
 ## Vulnerability reporting
 
