@@ -17,7 +17,20 @@ use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    #[allow(unused_mut)]
+    let mut builder = tauri::Builder::default();
+
+    // 2 個目を起動しても常駐は増やさず、既にいるインスタンスの画面を出すだけにする
+    // （トレイに畳まれていると起動できたか分からず、つい何度も起動してしまうため）。
+    // single-instance は最初に登録するのが公式の推奨。
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            system::window::show_main(app);
+        }));
+    }
+
+    builder
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         // メインウィンドウのサイズを記憶し、次回起動時に復元する（位置は center のまま）。
         .plugin(
@@ -30,9 +43,10 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
         // ログイン時の自動起動（Windows はレジストリ Run キーを内部で扱う）。
+        // 自動起動には FLAG を付けて登録し、手動起動と区別できるようにする。
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            None,
+            Some(vec![system::autostart::FLAG]),
         ))
         .on_window_event(|window, event| match event {
             // main / settings は X で閉じても破棄せず「隠す」（再利用してデッドロックを避ける）。
@@ -111,11 +125,10 @@ pub fn run() {
                     let _ = win.hide();
                 }
 
-                // 本当の初回起動だけ、トレイ常駐ではなくメインウィンドウを表示する
-                // （初期設定プロンプトをフロントが出す）。以降の起動・スタートアップでは隠したまま。
-                let first_run =
-                    settings::get_one(&app.state::<db::AppState>(), "autostart_prompted").is_none();
-                if first_run {
+                // ログイン時の自動起動は、これまでどおりトレイ常駐で静かに始める。
+                // それ以外（初回起動や、ユーザーが自分で exe・ショートカットを叩いた場合）は
+                // ウィンドウを出す。何も起きないと起動に失敗したように見えてしまうため。
+                if !system::autostart::launched_by_autostart() {
                     system::window::show_main(app.handle());
                 }
             }

@@ -20,6 +20,24 @@ use crate::settings;
 /// settings テーブルのキー（フロントの SETTING_KEYS.autostart と一致させること）。
 pub const KEY: &str = "autostart";
 
+/// 自動起動で立ち上がったことを示す引数。Run キーに付けて登録する。
+/// これが無いと「ユーザーが自分で起動した」のか「ログイン時に勝手に起動した」のかを
+/// 区別できず、手動起動でもウィンドウを出せない（＝起動に失敗したように見える）。
+pub const FLAG: &str = "--autostart";
+
+/// Run キーへ FLAG を付け直したかを控えるキー（移行は 1 回だけでよい）。
+const FLAG_KEY: &str = "autostart_flag";
+
+/// 引数列に FLAG が含まれるか。判定だけを純粋な関数に切り出してテスト可能にする。
+fn has_flag<I: IntoIterator<Item = String>>(args: I) -> bool {
+    args.into_iter().any(|a| a == FLAG)
+}
+
+/// いまのプロセスがログイン時の自動起動で立ち上がったか。
+pub fn launched_by_autostart() -> bool {
+    has_flag(std::env::args())
+}
+
 /// 照合の結果とるべき行動。判断だけを純粋な関数に切り出してテスト可能にする。
 #[derive(Debug, PartialEq, Eq)]
 enum Action {
@@ -63,6 +81,25 @@ pub fn restore(app: &AppHandle) {
             Err(e) => eprintln!("autostart: 復元に失敗しました: {e}"),
         },
     }
+
+    ensure_flag(&state, &manager);
+}
+
+/// 0.3.1 以前に登録した Run キーには FLAG が付いていない。そのままだとログイン時の起動を
+/// 手動起動と誤判定してウィンドウが出てしまうので、一度だけ登録し直す（enable は
+/// Run キーの値を上書きするだけなので、有効なときに呼び直せば引数が付く）。
+fn ensure_flag(state: &AppState, manager: &tauri_plugin_autostart::AutoLaunchManager) {
+    if settings::get_one(state, FLAG_KEY).is_some() {
+        return;
+    }
+    // 無効なら何もしなくてよい（次に有効化されるときは FLAG 付きで登録される）。
+    if manager.is_enabled().unwrap_or(false) {
+        if let Err(e) = manager.enable() {
+            eprintln!("autostart: 引数の付け直しに失敗しました: {e}");
+            return; // 済み印を付けず、次回起動でやり直す
+        }
+    }
+    let _ = settings::set_value(state, FLAG_KEY, "1");
 }
 
 #[cfg(test)]
@@ -81,5 +118,16 @@ mod tests {
         assert_eq!(decide(Some("true"), false), Action::Enable);
         // 希望が false なら OS 側が有効でも触らない。
         assert_eq!(decide(Some("false"), true), Action::None);
+    }
+
+    #[test]
+    fn detects_autostart_flag_in_args() {
+        let args = |v: &[&str]| v.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+        // ログイン時の自動起動（Run キーが FLAG 付きで起動する）。
+        assert!(has_flag(args(&["kopipe.exe", FLAG])));
+        // 手動起動（ダブルクリックやショートカット）。
+        assert!(!has_flag(args(&["kopipe.exe"])));
+        // 似て非なる引数は拾わない。
+        assert!(!has_flag(args(&["kopipe.exe", "--autostart-nope"])));
     }
 }

@@ -102,13 +102,25 @@ pub(crate) fn hide_on_blur(app: &AppHandle) {
     }
 }
 
-/// "main" ウィンドウを表示してフォーカスする（初回起動時の表示などに使う）。
+/// "main" ウィンドウを表示してフォーカスする（起動時や 2 個目の起動からの呼び出しに使う）。
 pub(crate) fn show_main(app: &AppHandle) {
     if let Some(win) = app.get_webview_window(MAIN) {
         let _ = win.show();
         let _ = win.set_focus();
+        bring_to_front(&win);
         mark_shown();
     }
+}
+
+/// show()+set_focus() の後押し。Windows のフォアグラウンド制限で前面化に失敗すると
+/// フォーカスが他アプリに残り、そのまま畳まれてしまうため確実に前面へ出す。
+fn bring_to_front(win: &tauri::WebviewWindow) {
+    #[cfg(windows)]
+    if let Ok(hwnd) = win.hwnd() {
+        super::win32::force_foreground(hwnd.0 as isize);
+    }
+    #[cfg(not(windows))]
+    let _ = win;
 }
 
 /// "main" ウィンドウの表示/非表示をトグルする共通処理。
@@ -123,6 +135,7 @@ pub(crate) fn toggle_window(app: &AppHandle) {
             super::win32::capture_prev_focus();
             let _ = win.show();
             let _ = win.set_focus();
+            bring_to_front(&win);
             mark_shown();
         }
     }
@@ -241,12 +254,7 @@ pub(crate) fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
-            "show" => {
-                if let Some(win) = app.get_webview_window(MAIN) {
-                    let _ = win.show();
-                    let _ = win.set_focus();
-                }
-            }
+            "show" => show_main(app),
             "settings" => show_settings(app),
             "quit" => app.exit(0),
             _ => {}

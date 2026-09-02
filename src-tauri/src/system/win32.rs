@@ -109,6 +109,46 @@ pub(crate) fn restore_prev_focus() {
     }
 }
 
+/// 指定ウィンドウを確実に前面へ出す（hwnd は HWND のポインタ値）。
+/// Windows は「フォアグラウンドを持っていないプロセスからの SetForegroundWindow」を
+/// 無視するため、show()+set_focus() だけでは前面に出ず、フォーカスが他アプリのままになる。
+/// するとフォーカス喪失とみなされて畳まれ、一瞬ちらついて消えたように見える。
+/// 2 個目の起動から常駐中のインスタンスを呼び出す場合が該当するので、貼り付け先の
+/// 復元と同じ AttachThreadInput の手法で前面スレッドへ一時的に結び付けてから前面化する。
+#[cfg(windows)]
+pub(crate) fn force_foreground(hwnd: isize) {
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
+    use windows::Win32::UI::Input::KeyboardAndMouse::SetFocus;
+    use windows::Win32::UI::WindowsAndMessaging::{
+        GetForegroundWindow, GetWindowThreadProcessId, SetForegroundWindow,
+    };
+
+    unsafe {
+        let target = HWND(hwnd as *mut core::ffi::c_void);
+        let fg = GetForegroundWindow();
+        if fg.0.is_null() {
+            let _ = SetForegroundWindow(target);
+            return;
+        }
+        let our_tid = GetCurrentThreadId();
+        let fg_tid = GetWindowThreadProcessId(fg, None);
+        // 自分が既に前面なら結び付けは不要（同じスレッドへの Attach はエラーになる）。
+        let attach = our_tid != fg_tid;
+        if attach {
+            let _ = AttachThreadInput(our_tid, fg_tid, true);
+        }
+        let _ = SetForegroundWindow(target);
+        let _ = SetFocus(Some(target));
+        if attach {
+            let _ = AttachThreadInput(our_tid, fg_tid, false);
+        }
+    }
+}
+
+#[cfg(not(windows))]
+pub(crate) fn force_foreground(_hwnd: isize) {}
+
 /// いま前面にあるウィンドウが kopipe 自身（同じプロセス）かを判定する。
 #[cfg(windows)]
 pub(crate) fn foreground_is_ours() -> bool {
