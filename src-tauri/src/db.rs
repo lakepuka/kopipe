@@ -52,6 +52,8 @@ fn rename_column_if_present(conn: &Connection, old: &str, new: &str) -> rusqlite
 /// DB を開き、テーブルを用意して AppState を作る。
 pub fn open_state(db_path: &Path) -> rusqlite::Result<AppState> {
     let conn = Connection::open(db_path)?;
+    // clip_tags の ON DELETE CASCADE を効かせる（SQLite は既定で外部キーが無効）。
+    conn.execute_batch("PRAGMA foreign_keys = ON;")?;
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS clips (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,8 +70,25 @@ pub fn open_state(db_path: &Path) -> rusqlite::Result<AppState> {
     ensure_column(&conn, "image_path", "TEXT")?;
     ensure_column(&conn, "hash", "TEXT")?;
     ensure_column(&conn, "html", "TEXT")?;
+    // 説明（行に添えるメモ）。未設定は NULL。
+    ensure_column(&conn, "note", "TEXT")?;
+    // タグ。名前は大小文字を区別せず一意（NOCASE）。clips が消えれば紐付けも消える。
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS tags (
+            id   INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL COLLATE NOCASE UNIQUE
+         );
+         CREATE TABLE IF NOT EXISTS clip_tags (
+            clip_id INTEGER NOT NULL REFERENCES clips(id) ON DELETE CASCADE,
+            tag_id  INTEGER NOT NULL REFERENCES tags(id)  ON DELETE CASCADE,
+            PRIMARY KEY (clip_id, tag_id)
+         );
+         CREATE INDEX IF NOT EXISTS idx_clip_tags_tag ON clip_tags(tag_id);",
+    )?;
     // 既存データの重複を一度だけ整理する。
     dedupe_clips(&conn)?;
+    // 外部キーが無効なまま消えた行の残骸を掃除し、どこからも参照されないタグを落とす。
+    crate::tags::prune_orphans(&conn)?;
     // 設定テーブルを用意する。
     crate::settings::init(&conn)?;
     Ok(AppState {

@@ -3,6 +3,9 @@ import { ClipImage } from "./ClipImage";
 import { ClipText } from "./ClipText";
 import { useT } from "../i18n";
 
+// 行に並べるタグの上限。これを超えた分は「+n」にまとめる（右側を膨らませない）。
+const MAX_ROW_TAGS = 2;
+
 // 履歴1行。ブックマークは右上角の青いコーナーリボンで表現、操作はホバーで出る ⋮（表示専用）。
 // 先頭の種別バッジはクリックで中身を確認できる（テキスト全文/HTML ソース/エクスプローラー/画像拡大）。
 // メニュー本体は App 側で座標指定して描画するため、ここでは開く要求だけ出す。
@@ -81,6 +84,29 @@ export function ClipRow({
           content
         )}
       </div>
+
+      {/* 説明とタグ。中身があるときだけ描画し、無い行は幅を 1px も取らない。
+          ラベルは付けず形で区別する＝丸い pill がタグ、薄い文字が説明。
+          本文の続きに見えないよう、CSS 側で本文との溝だけは必ず空ける。 */}
+      {(clip.tags.length > 0 || clip.note) && (
+        <div className="clip-meta">
+          {clip.tags.slice(0, MAX_ROW_TAGS).map((name) => (
+            <span key={name} className="clip-tag">
+              {name}
+            </span>
+          ))}
+          {clip.tags.length > MAX_ROW_TAGS && (
+            <span className="clip-tag more" title={clip.tags.join(", ")}>
+              +{clip.tags.length - MAX_ROW_TAGS}
+            </span>
+          )}
+          {clip.note && (
+            <span className="clip-note" title={`${t("note")}: ${clip.note}`}>
+              {clip.note}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="clip-actions">
         {copied && <span className="clip-copied">{t("copied")}</span>}

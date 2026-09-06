@@ -19,6 +19,8 @@ const textClip: Clip = {
   kind: "text",
   image_path: null,
   html: null,
+  note: null,
+  tags: [],
 };
 const imageClip: Clip = {
   id: 2,
@@ -28,6 +30,8 @@ const imageClip: Clip = {
   kind: "image",
   image_path: "a.png",
   html: null,
+  note: null,
+  tags: [],
 };
 
 const noop = () => {};
@@ -67,6 +71,28 @@ describe("ClipRow", () => {
     render(<ClipRow {...base} clip={textClip} onRequestMenu={onRequestMenu} />);
     fireEvent.click(screen.getByTitle("Details"));
     expect(onRequestMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it("説明とタグを右側に表示する（説明は tooltip で欄名が分かる）", () => {
+    render(
+      <ClipRow {...base} clip={{ ...textClip, note: "ブックマーク抽出", tags: ["仕事", "SQL"] }} />,
+    );
+    expect(screen.getByText("仕事")).toBeTruthy();
+    expect(screen.getByText("SQL")).toBeTruthy();
+    expect(screen.getByTitle("Note: ブックマーク抽出")).toBeTruthy();
+  });
+
+  it("タグが 3 つ以上なら 2 つ＋残り件数にまとめる", () => {
+    render(<ClipRow {...base} clip={{ ...textClip, tags: ["a", "b", "c", "d"] }} />);
+    expect(screen.getByText("a")).toBeTruthy();
+    expect(screen.getByText("b")).toBeTruthy();
+    expect(screen.queryByText("c")).toBeNull();
+    expect(screen.getByText("+2")).toBeTruthy();
+  });
+
+  it("説明もタグも無ければ右側の枠ごと描画しない（幅を取らない）", () => {
+    const { container } = render(<ClipRow {...base} clip={textClip} />);
+    expect(container.querySelector(".clip-meta")).toBeNull();
   });
 
   it("copied=true で『Copied!』表示", () => {

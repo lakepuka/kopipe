@@ -24,6 +24,8 @@ const clip = (id: number, content: string): Clip => ({
   kind: "text",
   image_path: null,
   html: null,
+  note: null,
+  tags: [],
 });
 
 function deferred<T>() {

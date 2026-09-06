@@ -14,6 +14,8 @@ const textClip: Clip = {
   kind: "text",
   image_path: null,
   html: null,
+  note: null,
+  tags: [],
 };
 const imageClip: Clip = {
   id: 2,
@@ -23,6 +25,8 @@ const imageClip: Clip = {
   kind: "image",
   image_path: "a.png",
   html: null,
+  note: null,
+  tags: [],
 };
 
 const noop = () => {};
@@ -32,6 +36,7 @@ const base = {
   onView: noop,
   onCopy: noop,
   onPastePlain: noop,
+  onEditMeta: noop,
   onToggleBookmark: noop,
   onDelete: noop,
   onClose: noop,
@@ -47,6 +52,7 @@ describe("ClipMenu", () => {
     expect(screen.getByText("View")).toBeTruthy();
     expect(screen.getByText("Copy")).toBeTruthy();
     expect(screen.getByText("Add bookmark")).toBeTruthy();
+    expect(screen.getByText("Edit note / tags…")).toBeTruthy();
 
     fireEvent.click(screen.getByText("Copy"));
     fireEvent.click(screen.getByText("Delete"));

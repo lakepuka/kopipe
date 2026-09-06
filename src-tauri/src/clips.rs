@@ -26,39 +26,65 @@ pub fn record_text(state: &AppState, content: &str, html: Option<&str>) -> Resul
     let conn = state.lock()?;
 
     // 既存の同一内容を消してから入れ直す（新しい id で確実に最上段へ／重複排除）。
-    // 元行のブックマークは引き継ぐ。
-    let bookmark = take_existing_bookmark(&conn, "content = ?1 AND kind = 'text'", content)?;
+    // 元行のブックマーク・説明・タグは引き継ぐ。
+    let carry = take_existing_meta(&conn, "content = ?1 AND kind = 'text'", content)?;
     let content_lower = content.to_lowercase();
     conn.execute(
         "INSERT INTO clips (content, content_lower, created_at, bookmark, kind, html)
          VALUES (?1, ?2, strftime('%s','now'), ?3, 'text', ?4)",
-        rusqlite::params![content, content_lower, bookmark, html],
+        rusqlite::params![content, content_lower, carry.bookmark, html],
     )
     .map_err(|e| e.to_string())?;
+    restore_meta(&conn, conn.last_insert_rowid(), &carry)?;
     Ok(true)
 }
 
+/// 同じ内容を再コピーしたときに、消して入れ直す行から引き継ぐもの。
+#[derive(Default)]
+struct CarryOver {
+    bookmark: i64,
+    note: Option<String>,
+    tags: Vec<i64>, // tags.id（名前で持つとタグ表記の揺れを増やすので id で持つ）
+}
+
 /// 重複排除の共通処理。`where_clause`（`?1` に `key` を束縛）に一致する既存行が
-/// あれば削除し、その行の bookmark を返す。無ければ 0。
-/// 「削除 → 入れ直し」で最新行に繰り上げるため、ブックマークだけ引き継ぐ。
-fn take_existing_bookmark(conn: &Connection, where_clause: &str, key: &str) -> Result<i64, String> {
-    let found: Option<(i64, i64)> = conn
+/// あれば削除し、引き継ぐ情報を返す。無ければ既定値（引き継ぎなし）。
+/// 「削除 → 入れ直し」で最新行に繰り上げるので、ユーザーが付けた情報だけ持ち越す。
+fn take_existing_meta(
+    conn: &Connection,
+    where_clause: &str,
+    key: &str,
+) -> Result<CarryOver, String> {
+    let found: Option<(i64, i64, Option<String>)> = conn
         .query_row(
             &format!(
-                "SELECT id, bookmark FROM clips WHERE {where_clause} ORDER BY id DESC LIMIT 1"
+                "SELECT id, bookmark, note FROM clips WHERE {where_clause} ORDER BY id DESC LIMIT 1"
             ),
             rusqlite::params![key],
-            |row| Ok((row.get(0)?, row.get(1)?)),
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
         )
         .optional()
         .map_err(|e| e.to_string())?;
-    if let Some((id, bookmark)) = found {
-        conn.execute("DELETE FROM clips WHERE id = ?1", [id])
-            .map_err(|e| e.to_string())?;
-        Ok(bookmark)
-    } else {
-        Ok(0)
+    let Some((id, bookmark, note)) = found else {
+        return Ok(CarryOver::default());
+    };
+    // 削除すると clip_tags は ON DELETE CASCADE で消えるので、先に控える。
+    let tags = crate::tags::tag_ids_of(conn, id)?;
+    conn.execute("DELETE FROM clips WHERE id = ?1", [id])
+        .map_err(|e| e.to_string())?;
+    Ok(CarryOver {
+        bookmark,
+        note,
+        tags,
+    })
+}
+
+/// 入れ直した行へ、引き継いだ説明とタグを戻す（ブックマークは INSERT 時に渡している）。
+fn restore_meta(conn: &Connection, new_id: i64, carry: &CarryOver) -> Result<(), String> {
+    if let Some(note) = &carry.note {
+        crate::tags::set_note(conn, new_id, note)?;
     }
+    crate::tags::attach_tag_ids(conn, new_id, &carry.tags)
 }
 
 /// ファイル/フォルダのコピー（パス一覧）を保存する。同じ内容があれば最上段へ繰り上げ。
@@ -68,14 +94,15 @@ pub fn record_files(state: &AppState, content: &str) -> Result<bool, String> {
         return Ok(false);
     }
     let conn = state.lock()?;
-    let bookmark = take_existing_bookmark(&conn, "content = ?1 AND kind = 'files'", content)?;
+    let carry = take_existing_meta(&conn, "content = ?1 AND kind = 'files'", content)?;
     let content_lower = content.to_lowercase();
     conn.execute(
         "INSERT INTO clips (content, content_lower, created_at, bookmark, kind)
          VALUES (?1, ?2, strftime('%s','now'), ?3, 'files')",
-        rusqlite::params![content, content_lower, bookmark],
+        rusqlite::params![content, content_lower, carry.bookmark],
     )
     .map_err(|e| e.to_string())?;
+    restore_meta(&conn, conn.last_insert_rowid(), &carry)?;
     Ok(true)
 }
 
@@ -84,14 +111,15 @@ pub fn record_files(state: &AppState, content: &str) -> Result<bool, String> {
 pub fn record_image(state: &AppState, image_path: &str, hash: &str) -> Result<bool, String> {
     let conn = state.lock()?;
     // 同じ画像（hash 一致）の既存行は消して入れ直す（最上段へ／重複排除）。同 hash は
-    // 同じ PNG を指すので image_path は同じ。ブックマークは引き継ぐ。
-    let bookmark = take_existing_bookmark(&conn, "hash = ?1 AND kind = 'image'", hash)?;
+    // 同じ PNG を指すので image_path は同じ。ブックマーク・説明・タグは引き継ぐ。
+    let carry = take_existing_meta(&conn, "hash = ?1 AND kind = 'image'", hash)?;
     conn.execute(
         "INSERT INTO clips (content, content_lower, created_at, bookmark, kind, image_path, hash)
          VALUES ('', '', strftime('%s','now'), ?3, 'image', ?1, ?2)",
-        rusqlite::params![image_path, hash, bookmark],
+        rusqlite::params![image_path, hash, carry.bookmark],
     )
     .map_err(|e| e.to_string())?;
+    restore_meta(&conn, conn.last_insert_rowid(), &carry)?;
     Ok(true)
 }
 
@@ -102,11 +130,12 @@ pub fn list_clips(limit: i64, state: State<AppState>) -> Result<Vec<Clip>, Strin
     let sql =
         format!("SELECT {CLIP_COLUMNS} FROM clips ORDER BY created_at DESC, id DESC LIMIT ?1");
     let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
-    let clips = stmt
+    let mut clips = stmt
         .query_map([limit], row_to_clip)
         .map_err(|e| e.to_string())?
         .collect::<Result<Vec<Clip>, _>>()
         .map_err(|e| e.to_string())?;
+    crate::clip_model::attach_tags(&conn, &mut clips)?;
     Ok(clips)
 }
 
@@ -146,6 +175,8 @@ fn delete_clip_inner(conn: &Connection, id: i64) -> Result<(), String> {
 
     conn.execute("DELETE FROM clips WHERE id = ?1", [id])
         .map_err(|e| e.to_string())?;
+    // この行だけが使っていたタグは、一覧からも消す。
+    crate::tags::prune_orphans(conn).map_err(|e| e.to_string())?;
 
     if let Some(p) = path {
         let _ = std::fs::remove_file(p); // 消せなくても致命的ではない
@@ -174,6 +205,8 @@ pub fn clear_clips(kind: String, app: AppHandle, state: State<AppState>) -> Resu
     }
     conn.execute("DELETE FROM clips WHERE kind = ?1", [&kind])
         .map_err(|e| e.to_string())?;
+    // 消えた行だけが使っていたタグは一覧からも消す。
+    crate::tags::prune_orphans(&conn).map_err(|e| e.to_string())?;
     drop(conn);
     let _ = app.emit("clips-changed", ());
     Ok(())
@@ -315,6 +348,132 @@ mod tests {
         let r = query_clips(&conn, "hello world", 100, 0, false, false).unwrap();
         assert_eq!(r.len(), 1);
         assert_eq!(r[0].content, "Hello World");
+    }
+
+    #[test]
+    fn search_matches_note_and_tag_names() {
+        let s = mem();
+        record_clip(&s, "AAA").unwrap();
+        record_clip(&s, "BBB").unwrap();
+        let conn = s.lock().unwrap();
+        let a: i64 = conn
+            .query_row("SELECT id FROM clips WHERE content = 'AAA'", [], |r| {
+                r.get(0)
+            })
+            .unwrap();
+        crate::tags::set_note(&conn, a, "請求書のひな形").unwrap();
+        crate::tags::set_tags(&conn, a, &["仕事".into()]).unwrap();
+
+        // 本文に無い語でも、説明とタグ名で引ける。
+        assert_eq!(
+            query_clips(&conn, "ひな形", 100, 0, false, false)
+                .unwrap()
+                .len(),
+            1
+        );
+        assert_eq!(
+            query_clips(&conn, "仕事", 100, 0, false, false)
+                .unwrap()
+                .len(),
+            1
+        );
+        // 付いているタグは結果にも入る。
+        let r = query_clips(&conn, "AAA", 100, 0, false, false).unwrap();
+        assert_eq!(r[0].tags, vec!["仕事"]);
+        assert_eq!(r[0].note.as_deref(), Some("請求書のひな形"));
+    }
+
+    #[test]
+    fn search_tag_tokens_and_together() {
+        let s = mem();
+        for c in ["one", "two", "three"] {
+            record_clip(&s, c).unwrap();
+        }
+        let conn = s.lock().unwrap();
+        let id = |c: &str| -> i64 {
+            conn.query_row("SELECT id FROM clips WHERE content = ?1", [c], |r| r.get(0))
+                .unwrap()
+        };
+        crate::tags::set_tags(&conn, id("one"), &["仕事".into(), "SQL".into()]).unwrap();
+        crate::tags::set_tags(&conn, id("two"), &["仕事".into()]).unwrap();
+
+        // 1 つなら「仕事」が付いた 2 件。
+        assert_eq!(
+            query_clips(&conn, "tag:仕事", 100, 0, false, false)
+                .unwrap()
+                .len(),
+            2
+        );
+        // カンマ区切りは AND（絞り込み）なので 1 件。
+        let r = query_clips(&conn, "tag:仕事,SQL", 100, 0, false, false).unwrap();
+        assert_eq!(r.len(), 1);
+        assert_eq!(r[0].content, "one");
+        // 本文の語と併用できる。
+        assert!(
+            query_clips(&conn, "two tag:仕事", 100, 0, false, false)
+                .unwrap()
+                .len()
+                == 1
+        );
+        assert!(query_clips(&conn, "two tag:SQL", 100, 0, false, false)
+            .unwrap()
+            .is_empty());
+    }
+
+    #[test]
+    fn regex_search_keeps_tag_filter_and_matches_note() {
+        let s = mem();
+        record_clip(&s, "order-123").unwrap();
+        record_clip(&s, "order-456").unwrap();
+        let conn = s.lock().unwrap();
+        let id: i64 = conn
+            .query_row(
+                "SELECT id FROM clips WHERE content = 'order-123'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        crate::tags::set_tags(&conn, id, &["経理".into()]).unwrap();
+        crate::tags::set_note(&conn, id, "四月分").unwrap();
+
+        // 正規表現とタグ絞り込みの併用。
+        let r = query_clips(&conn, r"tag:経理 order-\d+", 100, 0, false, true).unwrap();
+        assert_eq!(r.len(), 1);
+        assert_eq!(r[0].content, "order-123");
+        // 説明も正規表現の対象。
+        assert_eq!(
+            query_clips(&conn, "四.分", 100, 0, false, true)
+                .unwrap()
+                .len(),
+            1
+        );
+    }
+
+    #[test]
+    fn recopy_keeps_note_and_tags() {
+        let s = mem();
+        record_clip(&s, "keep me").unwrap();
+        {
+            let conn = s.lock().unwrap();
+            let id: i64 = conn
+                .query_row("SELECT id FROM clips WHERE content = 'keep me'", [], |r| {
+                    r.get(0)
+                })
+                .unwrap();
+            crate::tags::set_note(&conn, id, "大事なメモ").unwrap();
+            crate::tags::set_tags(&conn, id, &["仕事".into()]).unwrap();
+        }
+        record_clip(&s, "other").unwrap();
+        // 同じ内容を再コピー → 行は作り直されるが、付けた情報は消えない。
+        record_clip(&s, "keep me").unwrap();
+
+        let conn = s.lock().unwrap();
+        let all = query_clips(&conn, "", 100, 0, false, false).unwrap();
+        assert_eq!(all[0].content, "keep me");
+        assert_eq!(all[0].note.as_deref(), Some("大事なメモ"));
+        assert_eq!(all[0].tags, vec!["仕事"]);
+        // 引き継ぎで孤児タグが増えていない。
+        assert_eq!(crate::tags::all_tags(&conn).unwrap(), vec!["仕事"]);
     }
 
     #[test]

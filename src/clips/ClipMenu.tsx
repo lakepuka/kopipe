@@ -9,6 +9,7 @@ export function ClipMenu({
   onView,
   onCopy,
   onPastePlain,
+  onEditMeta,
   onToggleBookmark,
   onDelete,
   onClose,
@@ -19,13 +20,14 @@ export function ClipMenu({
   onView: () => void;
   onCopy: () => void;
   onPastePlain: () => void;
+  onEditMeta: () => void;
   onToggleBookmark: () => void;
   onDelete: () => void;
   onClose: () => void;
 }) {
   const t = useT();
   const W = 200;
-  const H = 204;
+  const H = 260;
   const left = Math.max(4, Math.min(x, window.innerWidth - W - 4));
   const top = Math.max(4, Math.min(y, window.innerHeight - H - 4));
 
@@ -69,6 +71,13 @@ export function ClipMenu({
             {t("paste_plain")}
           </button>
         )}
+        {/* 区切りで「中身を扱う操作」「メタ情報」「行そのもの」に分ける。
+            項目が増えても読み取りが重くならないように。 */}
+        <div className="menu-sep" />
+        <button type="button" onClick={onEditMeta}>
+          {t("edit_note_tags")}
+        </button>
+        <div className="menu-sep" />
         <button type="button" onClick={onToggleBookmark}>
           {clip.bookmark ? t("bookmark_remove") : t("bookmark_add")}
         </button>

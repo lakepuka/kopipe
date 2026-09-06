@@ -15,6 +15,8 @@ export type Clip = {
   kind: "text" | "image" | "files";
   image_path: string | null;
   html: string | null; // リッチ形式があれば HTML 断片
+  note: string | null; // ユーザーが付けた説明（未設定は null）
+  tags: string[]; // 付いているタグ（名前順）
 };
 
 // 注: Rust の snake_case 引数は JS では camelCase で渡す（Tauri が自動変換）。
@@ -40,6 +42,12 @@ export const setImageLimit = (mb: number) => invoke("set_image_limit", { mb });
 export const clearClips = (kind: "text" | "image" | "files") => invoke("clear_clips", { kind });
 export const resetAppSettings = () => invoke("reset_settings");
 export const setPinned = (pinned: boolean) => invoke("set_pinned", { pinned });
+
+// 説明とタグ。空文字の説明・空配列のタグは「消す」の意味になる。
+export const setClipNote = (id: number, note: string) => invoke("set_clip_note", { id, note });
+export const setClipTags = (id: number, tags: string[]) => invoke("set_clip_tags", { id, tags });
+// 使用中のタグ一覧（どこからも参照されていないタグは含まれない）。
+export const listTags = () => invoke<string[]>("list_tags");
 
 // files クリップの content は改行区切りのパス。
 export const filePaths = (c: Clip) => c.content.split("\n").filter(Boolean);

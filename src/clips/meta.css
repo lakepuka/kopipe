@@ -1,0 +1,180 @@
+/* 説明（note）とタグの表示・編集。行では「形」だけで区別し、ラベルはパネル側に置く。 */
+
+/* --- 行の右側（説明とタグ） --- */
+/* 幅は中身なり。列を予約しないので、何も付いていない行は今までどおりの見た目になる。
+   行の gap(6px) と合わせて 24px の溝を空け、本文の続きに見えないようにする。
+   伸びすぎると本文を圧迫するので上限だけ決める。 */
+.clip-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 45%;
+  margin-left: 18px;
+  overflow: hidden;
+}
+/* 幅が足りない窓では本文の表示を優先して隠す。 */
+@media (max-width: 380px) {
+  .clip-meta {
+    display: none;
+  }
+}
+/* 説明。右端に揃えた薄い文字。1 行に収め、はみ出したら省略。 */
+.clip-note {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--fg) 45%, transparent);
+}
+/* 行に出すタグ。読めれば十分なので、パネルの chip より一回り小さく静かに。 */
+.clip-tag {
+  flex-shrink: 0;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 15px;
+  color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.clip-tag.more {
+  color: color-mix(in srgb, var(--fg) 45%, transparent);
+  background-color: color-mix(in srgb, var(--fg) 9%, transparent);
+}
+
+/* --- 検索バー直下のタグ絞り込みバー --- */
+/* 右寄せで折り返す。幅は検索欄と同じ上限にし、左端が検索欄より先へ行かないようにする。 */
+.tag-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  margin: -2px 6px 6px auto;
+  max-width: 265px;
+}
+
+/* --- タグ chip（絞り込みバー・編集パネル共通） --- */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 150px;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 17px;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--fg) 62%, transparent);
+  background: none;
+}
+.tag-chip:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  color: var(--accent);
+}
+/* 有効（絞り込み中／この行に付いている）タグはアクセント色で塗る。 */
+.tag-chip.on {
+  border-color: transparent;
+  color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.tag-x {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 9px;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.6;
+}
+.tag-x:hover {
+  border: none;
+  opacity: 1;
+}
+
+/* --- 説明 / タグの編集パネル --- */
+/* 幅・高さとも窓に収まる範囲までとし、位置は実寸を測ってクランプする（ClipMetaPanel）。 */
+.meta-panel {
+  box-sizing: border-box;
+  width: min(320px, calc(100vw - 8px));
+  max-height: calc(100vh - 8px);
+  overflow-y: auto;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  padding: 10px;
+}
+/* 編集対象の履歴。どれを編集中か見失わないための 1 行。 */
+.meta-target {
+  margin: 0 0 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--fg) 45%, transparent);
+}
+/* 欄の名前。一瞬しか出ない面なので、ここではラベルを惜しまない。 */
+.meta-label {
+  margin: 0 0 4px;
+  font-size: 10px;
+  color: color-mix(in srgb, var(--fg) 45%, transparent);
+}
+.meta-panel input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 12px;
+}
+.meta-panel .meta-label + .tag-field {
+  margin-bottom: 10px;
+}
+.meta-panel > input {
+  margin-bottom: 10px;
+}
+/* 付いているタグと入力欄を 1 つの枠に見せる（入力欄は残り幅を埋める）。 */
+.tag-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.tag-field:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.meta-panel input.tag-input {
+  flex: 1;
+  min-width: 70px;
+  width: auto;
+  border: none;
+  background: none;
+  padding: 0 4px;
+}
+.meta-panel input.tag-input:focus {
+  outline: none;
+  border: none;
+}
+.tag-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  /* 候補が増えてもパネルが画面外まで伸びないよう、ここだけスクロールさせる。 */
+  max-height: 76px;
+  overflow-y: auto;
+}
+
+/* コンテキストメニューの区切り線（中身の操作／メタ情報／行そのもの）。 */
+.menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background-color: var(--border);
+}

@@ -12,6 +12,7 @@ pub mod db; // seed バイナリ（src/bin/seed.rs）から open_state を使う
 mod image_storage;
 mod settings;
 mod system;
+mod tags;
 
 use tauri::Manager;
 
@@ -149,6 +150,9 @@ pub fn run() {
             app_info::app_version,
             settings::get_settings,
             settings::set_setting,
+            tags::set_clip_note,
+            tags::set_clip_tags,
+            tags::list_tags,
             system::clipboard::paste_clip,
             system::clipboard::paste_image,
             system::clipboard::paste_files,

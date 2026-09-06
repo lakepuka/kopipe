@@ -3,12 +3,15 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import { ClipMenu } from "./clips/ClipMenu";
+import { ClipMetaPanel } from "./clips/ClipMetaPanel";
 import { ClipRow } from "./clips/ClipRow";
 import { PreviewModal } from "./clips/PreviewModal";
 import { SourceModal } from "./clips/SourceModal";
 import { useClips } from "./clips/useClips";
+import { useTags } from "./clips/useTags";
 import { useT } from "./i18n";
 import { getSettings, loadDisplay, parseUpdateCheck, SETTING_KEYS } from "./lib/prefs";
+import { parseTagQuery, toggleTagInQuery } from "./lib/tagQuery";
 import { applyTheme, loadTheme } from "./lib/theme";
 import { isNewerVersion } from "./lib/version";
 import { Onboarding } from "./components/Onboarding";
@@ -30,13 +33,16 @@ import {
 } from "./services/api";
 
 type MenuState = { clip: Clip; x: number; y: number };
+type MetaState = { clip: Clip; x: number; y: number; focus: "note" | "tags" };
 type SourceState = { text: string; html: string | null };
 
 function App() {
   const t = useT();
   const search = useClips();
+  const tags = useTags();
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [menu, setMenu] = useState<MenuState | null>(null);
+  const [meta, setMeta] = useState<MetaState | null>(null);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [source, setSource] = useState<SourceState | null>(null);
   const [showIcons, setShowIcons] = useState(true);
@@ -54,12 +60,14 @@ function App() {
       if (onboarding) return;
       if (source) setSource(null);
       else if (previewSrc) setPreviewSrc(null);
+      // 編集パネルの Esc は「保存せず閉じる」（外クリックや Enter は保存）。
+      else if (meta) setMeta(null);
       else if (menu) setMenu(null);
       else getCurrentWindow().hide();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onboarding, source, previewSrc, menu]);
+  }, [onboarding, source, previewSrc, menu, meta]);
 
   // ↑↓ で履歴リストを移動する。検索欄や本体にフォーカスがある状態で ↓ を押すと
   // 先頭行へ、先頭行で ↑ を押すと検索欄へ戻る。Enter でのペーストは各行側で処理。
@@ -67,7 +75,7 @@ function App() {
     const onArrow = (e: KeyboardEvent) => {
       if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
       // モーダル／メニュー／オンボーディング表示中はリスト移動しない。
-      if (onboarding || menu || previewSrc || source) return;
+      if (onboarding || menu || meta || previewSrc || source) return;
       const rows = Array.from(document.querySelectorAll<HTMLElement>(".clip-row"));
       if (rows.length === 0) return;
       const active = document.activeElement as HTMLElement | null;
@@ -91,7 +99,7 @@ function App() {
     };
     window.addEventListener("keydown", onArrow);
     return () => window.removeEventListener("keydown", onArrow);
-  }, [onboarding, menu, previewSrc, source]);
+  }, [onboarding, menu, meta, previewSrc, source]);
 
   // ウィンドウがフォーカスを得た直後の最初のクリックは「アクティブ化のためのクリック」とみなし、
   // 行クリック等に伝えない。設定ウィンドウを出した状態でメインをクリックしたときは、
@@ -252,6 +260,9 @@ function App() {
         onToggleRegex={() => search.setUseRegex((v) => !v)}
         bookmarksOnly={search.bookmarksOnly}
         onToggleBookmarks={() => search.setBookmarksOnly((v) => !v)}
+        allTags={tags.tags}
+        activeTags={parseTagQuery(search.query).tags}
+        onToggleTag={(name) => search.setQuery(toggleTagInQuery(search.query, name))}
       />
 
       {search.error && <p style={{ color: "tomato", margin: "0 8px 6px" }}>{search.error}</p>}
@@ -291,9 +302,32 @@ function App() {
           }}
           onCopy={() => handleCopy(menu.clip)}
           onPastePlain={() => handlePastePlain(menu.clip)}
+          onEditMeta={() => {
+            // メニューを閉じ、同じ位置に説明 / タグの編集パネルを開く。
+            setMeta({ clip: menu.clip, x: menu.x, y: menu.y, focus: "note" });
+            setMenu(null);
+          }}
           onToggleBookmark={() => handleToggleBookmark(menu.clip.id)}
           onDelete={() => handleDelete(menu.clip.id)}
           onClose={() => setMenu(null)}
+        />
+      )}
+
+      {meta && (
+        <ClipMetaPanel
+          clip={meta.clip}
+          x={meta.x}
+          y={meta.y}
+          focus={meta.focus}
+          allTags={tags.tags}
+          onSaved={() => {
+            // 保存で clips-changed が飛ぶので一覧は自動更新されるが、
+            // 直後の表示がずれないようここでも引き直す。
+            search.refresh();
+            tags.refresh();
+          }}
+          onError={search.setError}
+          onClose={() => setMeta(null)}
         />
       )}
 

@@ -26,6 +26,7 @@ kopipe（コピペ）は、**おしゃれでサクサク動く** Windows のク�
 - Automatic clipboard history: text, files/folders (`CF_HDROP`), images (PNG)
 - Rich text: keeps HTML so links/formatting survive a paste; view Plain / HTML / Web
 - Bookmark items, regex / keyword search, deduplicated history
+- Add a note and tags to any item; search matches them too (`tag:work,sql` to filter)
 - Summon with a double‑tap of Ctrl (or Shift, or a custom shortcut)
 - Themes, English / 日本語, optional launch at PC login (runs in the tray)
 

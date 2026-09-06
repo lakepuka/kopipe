@@ -18,10 +18,13 @@ import {
   copyClip,
   imageDirPath,
   imageStorageBytes,
+  listTags,
   pasteClip,
   pasteText,
   resetAppSettings,
   searchClips,
+  setClipNote,
+  setClipTags,
   setImageLimit,
   setPinned,
   setShortcut,
@@ -42,6 +45,8 @@ const text: Clip = {
   kind: "text",
   image_path: null,
   html: null,
+  note: null,
+  tags: [],
 };
 const image: Clip = { ...text, id: 2, kind: "image", image_path: "a.png" };
 const files: Clip = { ...text, id: 3, kind: "files", content: "C:/a\nC:/b" };
@@ -105,6 +110,21 @@ describe("api", () => {
 
     copyClip(text);
     expect(mockWriteText).toHaveBeenCalledWith("x");
+  });
+
+  it("説明とタグの wrapper は id と値をそのまま渡す", () => {
+    setClipNote(7, "メモ");
+    expect(mockInvoke).toHaveBeenCalledWith("set_clip_note", { id: 7, note: "メモ" });
+
+    // 空文字は「説明を消す」の意味。そのまま渡して Rust 側で NULL にする。
+    setClipNote(7, "");
+    expect(mockInvoke).toHaveBeenCalledWith("set_clip_note", { id: 7, note: "" });
+
+    setClipTags(7, ["仕事", "SQL"]);
+    expect(mockInvoke).toHaveBeenCalledWith("set_clip_tags", { id: 7, tags: ["仕事", "SQL"] });
+
+    listTags();
+    expect(mockInvoke).toHaveBeenCalledWith("list_tags");
   });
 
   it("設定画面向けの command wrapper は正しいコマンド名と引数で invoke する", () => {
