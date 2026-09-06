@@ -38,8 +38,10 @@ kopipe（コピペ）は、**おしゃれでサクサク動く** Windows のク�
 3. On first launch a short setup guide appears (language, welcome, optional
    auto‑start). After that kopipe stays in the tray — press **Ctrl twice** to open it.
 
-Requirements: Windows 10/11. The WebView2 runtime is preinstalled on Windows 11
-(the installer fetches it automatically if missing).
+Requirements: Windows 10/11 (x64 — Intel or AMD). The WebView2 runtime is preinstalled
+on Windows 11 (the installer fetches it automatically if missing). There is no native
+ARM64 build; on Windows 11 on ARM the x64 installer should run under emulation, but
+that combination is untested.
 
 > Windows 11 hides new tray icons by default. If you don't see kopipe in the
 > tray, click the **^** chevron on the taskbar — you can drag the icon out to
