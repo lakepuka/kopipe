@@ -36,6 +36,7 @@ export function useSettingsState() {
   const [showIcons, setShowIcons] = useState(true);
   const [maxLines, setMaxLines] = useState(1);
   const [pinned, setPinned] = useState(false);
+  const [resetSearchOnShow, setResetSearchOnShow] = useState(false);
   const [autoStart, setAutoStart] = useState(false);
   const [updateCheck, setUpdateCheck] = useState(true);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -90,6 +91,7 @@ export function useSettingsState() {
       setShowIcons(d.showIcons);
       setMaxLines(d.maxLines);
       setPinned(d.pinned);
+      setResetSearchOnShow(d.resetSearchOnShow);
     });
     getSettings().then((s) => setUpdateCheck(parseUpdateCheck(s[SETTING_KEYS.updateCheck])));
     isEnabled()
@@ -147,6 +149,7 @@ export function useSettingsState() {
       setShortcut(DEFAULT_SHORTCUT);
       setLang(DEFAULT_LANG);
       setUpdateCheck(true);
+      setResetSearchOnShow(false);
       refreshImageDir();
     } catch (e) {
       console.error(e);
@@ -199,6 +202,11 @@ export function useSettingsState() {
     }
   }
 
+  function changeResetSearchOnShow(value: boolean) {
+    setResetSearchOnShow(value);
+    saveSetting(SETTING_KEYS.resetSearchOnShow, value ? "true" : "false");
+  }
+
   function changeUpdateCheck(value: boolean) {
     setUpdateCheck(value);
     saveSetting(SETTING_KEYS.updateCheck, value ? "true" : "false");
@@ -212,6 +220,7 @@ export function useSettingsState() {
     changeLang,
     changeMaxLines,
     changePinned,
+    changeResetSearchOnShow,
     changeShowIcons,
     changeTheme,
     clearKind,
@@ -221,6 +230,7 @@ export function useSettingsState() {
     lang,
     maxLines,
     pinned,
+    resetSearchOnShow,
     resetSettings,
     saveLimit,
     saveShortcut,

@@ -58,9 +58,18 @@ pub fn set_pinned(
 // フォーカスを戻すことがある）で隠してしまわないための猶予判定に使う。
 static SHOWN_AT: Mutex<Option<Instant>> = Mutex::new(None);
 
-/// 「いま表示した」と記録する（直後の blur を無視させる）。
+/// 「いま表示した」と記録する（直後の blur を無視させる）。設定ウィンドウでも使う。
 fn mark_shown() {
     *SHOWN_AT.lock().unwrap() = Some(Instant::now());
+}
+
+/// main を表示したときの記録＋フロントへの通知。
+/// main が出てくる経路（起動・トレイ・ショートカット・2 回押し）は全てここを通るので、
+/// 「呼び出すたびに検索条件をリセット」の合図はこの 1 点で足りる。
+/// 設定ウィンドウの表示では鳴らさない（main は出ていないため）。
+fn mark_main_shown(app: &AppHandle) {
+    mark_shown();
+    let _ = app.emit("main-shown", ());
 }
 
 /// 表示直後、この時間内の blur は無視する（Windows の一過性フォーカス戻り対策）。
@@ -108,7 +117,7 @@ pub(crate) fn show_main(app: &AppHandle) {
         let _ = win.show();
         let _ = win.set_focus();
         bring_to_front(&win);
-        mark_shown();
+        mark_main_shown(app);
     }
 }
 
@@ -136,7 +145,7 @@ pub(crate) fn toggle_window(app: &AppHandle) {
             let _ = win.show();
             let _ = win.set_focus();
             bring_to_front(&win);
-            mark_shown();
+            mark_main_shown(app);
         }
     }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
@@ -48,6 +48,9 @@ function App() {
   const [showIcons, setShowIcons] = useState(true);
   const [maxLines, setMaxLines] = useState(1);
   const [pinned, setPinned] = useState(false);
+  // 呼び出しのたびに検索条件を戻すか（既定はオフ＝前回の絞り込みを保つ）。
+  // main-shown のリスナは張り替えたくないので、値は ref で見る。
+  const resetOnShow = useRef(false);
   const [onboarding, setOnboarding] = useState(false);
   const [update, setUpdate] = useState<LatestRelease | null>(null);
 
@@ -134,6 +137,7 @@ function App() {
         setShowIcons(d.showIcons);
         setMaxLines(d.maxLines);
         setPinned(d.pinned);
+        resetOnShow.current = d.resetSearchOnShow;
       });
     };
     apply();
@@ -145,6 +149,19 @@ function App() {
       mq.removeEventListener("change", apply);
     };
   }, []);
+
+  // 呼び出し（トレイ・ショートカット・2 回押し）のたびに検索条件を戻す。設定が ON のときだけ。
+  // 正規表現モードは条件ではなく「検索のしかた」なので残す。
+  useEffect(() => {
+    const unlisten = listen("main-shown", () => {
+      if (!resetOnShow.current) return;
+      search.setQuery(""); // tag: の絞り込みも検索文字列に入っているのでこれで消える
+      search.setBookmarksOnly(false);
+    });
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, [search.setQuery, search.setBookmarksOnly]);
 
   // 初回起動時のみ：オンボーディング（言語→ようこそ→自動起動）を表示する。
   useEffect(() => {

@@ -9,6 +9,7 @@ export const SETTING_KEYS = {
   showRowIcons: "show_row_icons",
   maxLines: "max_lines",
   pinned: "pinned",
+  resetSearchOnShow: "reset_search_on_show",
   imageDir: "image_dir",
   imageLimitMb: "image_limit_mb",
   // 自動起動の希望状態。OS 側（レジストリ）は上書き再インストールで消えることがあるため、
@@ -25,6 +26,7 @@ export const parseMaxLines = (v?: string) => {
   return Number.isFinite(n) ? n : 1; // 0 は「全行」、未設定は 1
 };
 export const parsePinned = (v?: string) => v === "true";
+export const parseResetSearchOnShow = (v?: string) => v === "true"; // 未設定はオフ
 export const parseUpdateCheck = (v?: string) => v !== "false"; // 未設定は有効（オプトアウト式）
 
 /// 全設定をまとめて取得（失敗時は空）。複数項目を読むときの IPC を1回にまとめる。
@@ -36,17 +38,19 @@ export async function getSettings(): Promise<Record<string, string>> {
   }
 }
 
-/// 主画面の表示系設定（アイコン/行数/ピン）を1回の取得でまとめて読む。
+/// 主画面の表示系設定（アイコン/行数/ピン/呼び出し時のリセット）を1回の取得でまとめて読む。
 export async function loadDisplay(): Promise<{
   showIcons: boolean;
   maxLines: number;
   pinned: boolean;
+  resetSearchOnShow: boolean;
 }> {
   const s = await getSettings();
   return {
     showIcons: parseShowIcons(s[SETTING_KEYS.showRowIcons]),
     maxLines: parseMaxLines(s[SETTING_KEYS.maxLines]),
     pinned: parsePinned(s[SETTING_KEYS.pinned]),
+    resetSearchOnShow: parseResetSearchOnShow(s[SETTING_KEYS.resetSearchOnShow]),
   };
 }
 

@@ -68,6 +68,7 @@ export default function Settings() {
     changeLang,
     changeMaxLines,
     changePinned,
+    changeResetSearchOnShow,
     changeShowIcons,
     changeTheme,
     clearKind,
@@ -77,6 +78,7 @@ export default function Settings() {
     lang,
     maxLines,
     pinned,
+    resetSearchOnShow,
     resetSettings,
     saveLimit,
     saveShortcut,
@@ -161,6 +163,14 @@ export default function Settings() {
                 onChange={(e) => changePinned(e.currentTarget.checked)}
               />
               {t("pin_window")}
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={resetSearchOnShow}
+                onChange={(e) => changeResetSearchOnShow(e.currentTarget.checked)}
+              />
+              {t("reset_search_on_show")}
             </label>
             <label>
               {t("max_lines")}
