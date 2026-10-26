@@ -48,14 +48,13 @@
 }
 
 /* --- 検索バー直下のタグ絞り込みバー --- */
-/* 右寄せで折り返す。幅は検索欄と同じ上限にし、左端が検索欄より先へ行かないようにする。 */
+/* 窓幅いっぱいに左から並べて折り返す。検索欄の幅に絞ると左側が空いたまま
+   2 行に折れてしまい、タグが多いと縦にも伸びるため。 */
 .tag-bar {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
   gap: 4px;
-  margin: -2px 6px 6px auto;
-  max-width: 265px;
+  margin: -2px 6px 6px;
 }
 
 /* --- タグ chip（絞り込みバー・編集パネル共通） --- */
