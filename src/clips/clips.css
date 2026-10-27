@@ -187,8 +187,14 @@ textarea.source-modal-body {
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   padding: 8px;
   border-top: 1px solid var(--border);
+}
+/* 選択が無いときは押せないことが分かるよう薄くする。 */
+.source-modal-footer button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 /* 主アクションなのでアクセント色で塗る。 */
 .source-paste-btn {

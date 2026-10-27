@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useT } from "../i18n";
 
@@ -7,8 +7,9 @@ type View = "plain" | "html" | "web";
 // SourceModal — クリップの中身を表示し、その場で編集して貼り付けられるビューワー。
 // プレーン / HTML(ソース) は編集可能なテキストエリア、Web は描画プレビュー（編集中の
 // HTML を反映）。Web は sandbox 付き iframe でスクリプトを一切実行しない（無害化）。
-// 「貼り付け」は表示中の文字列をそのまま元アプリへ貼り付ける。貼り付けた内容は
-// クリップボード監視が拾うため、元と違えば新しい履歴として自動保存される。
+// 「貼り付け」は表示中の文字列をそのまま元アプリへ貼り付ける。「選択部分のみ貼り付け」は
+// テキストエリアで選んだ範囲だけを貼る。どちらも paste_clip 経由なので、貼った内容は
+// 元と違えば新しい履歴として保存される（バックエンドが貼り付けと同時に記録する）。
 export function SourceModal({
   text,
   html,
@@ -24,6 +25,10 @@ export function SourceModal({
   const [view, setView] = useState<View>("plain");
   const [plainDraft, setPlainDraft] = useState(text);
   const [htmlDraft, setHtmlDraft] = useState(html ?? "");
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  // 範囲選択があるか。ボタンを押すとテキストエリアは blur するが選択範囲は保持されるので、
+  // 貼り付け時に ref から読む。ここで持つのはボタンの有効/無効の切替のためだけ。
+  const [hasSelection, setHasSelection] = useState(false);
 
   // 現在のビューで編集対象になっている文字列（Web は HTML ソースを対象にする）。
   const draft = view === "plain" ? plainDraft : htmlDraft;
@@ -33,7 +38,11 @@ export function SourceModal({
     <button
       type="button"
       className={`source-tab${view === key ? " active" : ""}`}
-      onClick={() => setView(key)}
+      onClick={() => {
+        setView(key);
+        // タブを替えると表示内容ごと選択が失われる（onSelect も飛ばない）ので畳んでおく。
+        setHasSelection(false);
+      }}
     >
       {label}
     </button>
@@ -79,15 +88,34 @@ export function SourceModal({
           <iframe className="source-modal-web" sandbox="" srcDoc={htmlDraft} title="web" />
         ) : (
           <textarea
+            ref={bodyRef}
             className="source-modal-body"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onSelect={(e) =>
+              setHasSelection(e.currentTarget.selectionStart !== e.currentTarget.selectionEnd)
+            }
             spellCheck={false}
             // biome-ignore lint/a11y/noAutofocus: モーダルを開いたら即編集できるようにする。
             autoFocus
           />
         )}
         <div className="source-modal-footer">
+          <button
+            type="button"
+            disabled={!hasSelection}
+            onClick={() => {
+              const el = bodyRef.current;
+              if (!el) return;
+              const selected = el.value.slice(el.selectionStart, el.selectionEnd);
+              // 空白だけの選択は記録側が捨てるので、貼る意味もない。
+              if (!selected.trim()) return;
+              onPaste(selected);
+              onClose();
+            }}
+          >
+            {t("paste_selection")}
+          </button>
           <button
             type="button"
             className="source-paste-btn"
