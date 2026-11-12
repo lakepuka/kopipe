@@ -330,6 +330,76 @@ mod tests {
     }
 
     #[test]
+    fn dedupe_clips_carries_bookmark_for_images_and_files() {
+        let s = mem();
+        let conn = s.lock().unwrap();
+        // (kind, content, hash, bookmark)。画像は hash、ファイルは content でグループ化される。
+        let rows = [
+            ("image", "", Some("h1"), 1), // 古い方にだけブックマーク → 新しい方へ移る
+            ("image", "", Some("h1"), 0),
+            ("image", "", Some("h2"), 0), // 重複なし・ブックマークなしのまま
+            ("files", "C:\\a.txt", None, 0),
+            ("files", "C:\\a.txt", None, 1),
+            ("files", "C:\\a.txt", None, 0),
+        ];
+        for (i, (kind, content, hash, bm)) in rows.iter().enumerate() {
+            conn.execute(
+                "INSERT INTO clips (content, content_lower, created_at, bookmark, kind, hash)
+                 VALUES (?1, ?1, ?2, ?3, ?4, ?5)",
+                rusqlite::params![content, i as i64, bm, kind, hash],
+            )
+            .unwrap();
+        }
+        dedupe_clips(&conn).unwrap();
+
+        let mut stmt = conn
+            .prepare("SELECT kind, hash, bookmark FROM clips ORDER BY id")
+            .unwrap();
+        let left: Vec<(String, Option<String>, i64)> = stmt
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+            .unwrap()
+            .map(|r| r.unwrap())
+            .collect();
+        // h1 / h2 / a.txt 各 1 件。ブックマークは残した行（最大 id）へ移っている。
+        assert_eq!(
+            left,
+            vec![
+                ("image".to_string(), Some("h1".to_string()), 1),
+                ("image".to_string(), Some("h2".to_string()), 0),
+                ("files".to_string(), None, 1),
+            ]
+        );
+    }
+
+    /// 起動時の重複整理は履歴件数に対して線形でなければならない。
+    /// 以前は件数の二乗で、数千件でも起動が数秒〜数十秒止まった（画面もトレイも出ない）。
+    #[test]
+    fn dedupe_clips_stays_fast_on_large_history() {
+        let s = mem();
+        let conn = s.lock().unwrap();
+        conn.execute_batch("BEGIN").unwrap();
+        for i in 0..20_000 {
+            let content = format!("clip {i} {}", "x".repeat(200));
+            conn.execute(
+                "INSERT INTO clips (content, content_lower, created_at, bookmark, kind)
+                 VALUES (?1, ?1, ?2, ?3, 'text')",
+                rusqlite::params![content, i, i % 50 == 0],
+            )
+            .unwrap();
+        }
+        conn.execute_batch("COMMIT").unwrap();
+
+        let t = std::time::Instant::now();
+        dedupe_clips(&conn).unwrap();
+        // 二乗版は 20,000 件で数分かかる。線形なら debug ビルドでも 1 秒未満。
+        assert!(
+            t.elapsed() < std::time::Duration::from_secs(10),
+            "{:?}",
+            t.elapsed()
+        );
+    }
+
+    #[test]
     fn search_token_and_is_case_insensitive() {
         let s = mem();
         record_clip(&s, "Hello World").unwrap();

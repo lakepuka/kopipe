@@ -100,13 +100,15 @@ pub fn open_state(db_path: &Path) -> rusqlite::Result<AppState> {
 /// 画像は hash）の行は最新（id 最大）の 1 件だけ残す。
 pub(crate) fn dedupe_clips(conn: &Connection) -> rusqlite::Result<()> {
     // --- テキスト/ファイル: (kind, content) でグループ化 ---
-    // 残す行にブックマークを引き継ぐ。
+    // 残す行（グループ最大 id）にブックマークを引き継ぐ。
+    // ※以前は「残す行ごとに clips 全体を EXISTS で走査」していて、履歴件数の二乗で遅くなり
+    //   （5,000 件で数秒、10,000 件で数十秒）、起動が終わるまで画面もトレイも出なかった。
+    //   グループ単位の HAVING で 1 回の集計に収めること。
     conn.execute(
         "UPDATE clips SET bookmark = 1
-         WHERE kind IN ('text','files')
-           AND id IN (SELECT MAX(id) FROM clips WHERE kind IN ('text','files') GROUP BY kind, content)
-           AND EXISTS (SELECT 1 FROM clips d
-                       WHERE d.kind = clips.kind AND d.content = clips.content AND d.bookmark = 1)",
+         WHERE bookmark = 0
+           AND id IN (SELECT MAX(id) FROM clips WHERE kind IN ('text','files')
+                      GROUP BY kind, content HAVING MAX(bookmark) = 1)",
         [],
     )?;
     conn.execute(
@@ -119,10 +121,9 @@ pub(crate) fn dedupe_clips(conn: &Connection) -> rusqlite::Result<()> {
     // --- 画像: hash でグループ化（同 hash は同じ PNG を指すのでファイルは消さない） ---
     conn.execute(
         "UPDATE clips SET bookmark = 1
-         WHERE kind = 'image' AND hash IS NOT NULL
-           AND id IN (SELECT MAX(id) FROM clips WHERE kind = 'image' AND hash IS NOT NULL GROUP BY hash)
-           AND EXISTS (SELECT 1 FROM clips d
-                       WHERE d.kind = 'image' AND d.hash = clips.hash AND d.bookmark = 1)",
+         WHERE bookmark = 0
+           AND id IN (SELECT MAX(id) FROM clips WHERE kind = 'image' AND hash IS NOT NULL
+                      GROUP BY hash HAVING MAX(bookmark) = 1)",
         [],
     )?;
     conn.execute(
