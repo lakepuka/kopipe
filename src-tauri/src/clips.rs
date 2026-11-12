@@ -124,8 +124,10 @@ pub fn record_image(state: &AppState, image_path: &str, hash: &str) -> Result<bo
 }
 
 /// 新しい順に最大 `limit` 件返す。
-#[tauri::command]
-pub fn list_clips(limit: i64, state: State<AppState>) -> Result<Vec<Clip>, String> {
+/// 一覧・検索は async（ワーカースレッド）で実行する。同期コマンドは UI スレッドで走るので、
+/// 履歴が多いときの検索（入力 1 文字ごとに走る）でウィンドウが固まらないように。
+#[tauri::command(async)]
+pub fn list_clips(limit: i64, state: State<'_, AppState>) -> Result<Vec<Clip>, String> {
     let conn = state.lock()?;
     let sql =
         format!("SELECT {CLIP_COLUMNS} FROM clips ORDER BY created_at DESC, id DESC LIMIT ?1");
@@ -141,14 +143,14 @@ pub fn list_clips(limit: i64, state: State<AppState>) -> Result<Vec<Clip>, Strin
 
 /// 検索。通常はスペース区切り token の AND 部分一致。use_regex なら正規表現。
 /// 画像行は content が空なのでテキスト検索には基本ヒットしない（検索が空なら全件に出る）。
-#[tauri::command]
+#[tauri::command(async)]
 pub fn search_clips(
     query: String,
     limit: i64,
     offset: i64,
     bookmarks_only: bool,
     use_regex: bool,
-    state: State<AppState>,
+    state: State<'_, AppState>,
 ) -> Result<Vec<Clip>, String> {
     // コマンドは「ロックを取って純関数を呼ぶ」だけに薄く保つ（テストしやすさのため）。
     let conn = state.lock()?;
@@ -397,6 +399,33 @@ mod tests {
             "{:?}",
             t.elapsed()
         );
+    }
+
+    /// 条件なしの一覧と画像の重複判定は索引で引く（全行走査・全行ソートにしない）。
+    #[test]
+    fn list_and_image_lookup_use_indexes() {
+        let s = mem();
+        let conn = s.lock().unwrap();
+        let plan = |sql: &str| -> String {
+            let mut stmt = conn.prepare(&format!("EXPLAIN QUERY PLAN {sql}")).unwrap();
+            let rows: Vec<String> = stmt
+                .query_map([], |r| r.get::<_, String>(3))
+                .unwrap()
+                .map(|r| r.unwrap())
+                .collect();
+            rows.join(" / ")
+        };
+        // query_clips（条件なし）と同じ形。
+        let list = plan(
+            "SELECT id FROM clips WHERE 1=1 ORDER BY created_at DESC, id DESC LIMIT 100 OFFSET 0",
+        );
+        assert!(list.contains("idx_clips_recent"), "{list}");
+        assert!(!list.contains("TEMP B-TREE"), "{list}");
+        // record_image の take_existing_meta と同じ形。
+        let image = plan(
+            "SELECT id FROM clips WHERE hash = 'h' AND kind = 'image' ORDER BY id DESC LIMIT 1",
+        );
+        assert!(image.contains("idx_clips_hash"), "{image}");
     }
 
     #[test]

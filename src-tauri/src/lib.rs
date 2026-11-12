@@ -143,6 +143,7 @@ pub fn run() {
             clips::toggle_bookmark,
             clips::delete_clip,
             image_storage::image_data_url,
+            image_storage::image_thumb_data_url,
             clips::clear_clips,
             image_storage::image_storage_bytes,
             image_storage::image_dir_path,

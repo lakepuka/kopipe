@@ -29,6 +29,9 @@ api.ts  ── invoke("cmd", args) ──▶  #[tauri::command] (src-tauri/src/*
 ## 新しいコマンドを足す手順
 
 1. `src-tauri/src/**` に `#[tauri::command]` を書く（戻りのエラーは `Result<_, String>`）。
+   同期コマンドは **UI スレッドで実行される**。履歴件数や画像サイズに比例して重くなる処理
+   （検索・一覧・画像の読み込み）は `#[tauri::command(async)]` にしてワーカースレッドへ逃がす
+   （`State<'_, AppState>` と書く）。フォーカス操作や Ctrl+V 送出など UI スレッド前提の処理は同期のまま。
 2. [lib.rs](../../src-tauri/src/lib.rs) の `invoke_handler![...]` に登録する（**忘れやすい**）。
 3. `src/services/api.ts` にラッパを追加。Rust の `snake_case` 引数は JS 側では
    **camelCase** で渡す（Tauri が変換する）。

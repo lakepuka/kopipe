@@ -72,6 +72,13 @@ pub fn open_state(db_path: &Path) -> rusqlite::Result<AppState> {
     ensure_column(&conn, "html", "TEXT")?;
     // 説明（行に添えるメモ）。未設定は NULL。
     ensure_column(&conn, "note", "TEXT")?;
+    // 一覧は常に「新しい順」で引く。索引が無いと条件なしの一覧（起動時・コピーのたびの
+    // 再取得・スクロール）でも全行の本文を並べ替えることになり、5 万件で 100ms 超かかる。
+    // 画像の重複判定（hash 一致）も、索引が無いと保存のたびに全行を走査する。
+    conn.execute_batch(
+        "CREATE INDEX IF NOT EXISTS idx_clips_recent ON clips(created_at DESC, id DESC);
+         CREATE INDEX IF NOT EXISTS idx_clips_hash ON clips(hash) WHERE hash IS NOT NULL;",
+    )?;
     // タグ。名前は大小文字を区別せず一意（NOCASE）。clips が消えれば紐付けも消える。
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS tags (

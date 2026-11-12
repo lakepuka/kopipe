@@ -219,6 +219,21 @@ pub(crate) fn read_clipboard_files() -> Option<Vec<String>> {
     None
 }
 
+/// クリップボードの変更番号。内容が変わるたびに OS が増やす。中身を読まずに
+/// 「前回から変わったか」だけを判定するのに使う（監視のポーリングを安くするため）。
+/// 0 はクリップボードへのアクセス権が無い等で取得できなかったことを表すので None にする。
+#[cfg(windows)]
+pub(crate) fn clipboard_sequence() -> Option<u32> {
+    use windows::Win32::System::DataExchange::GetClipboardSequenceNumber;
+    let n = unsafe { GetClipboardSequenceNumber() };
+    (n != 0).then_some(n)
+}
+
+#[cfg(not(windows))]
+pub(crate) fn clipboard_sequence() -> Option<u32> {
+    None
+}
+
 /// ファイル一覧をクリップボードへ CF_HDROP として書き込む（エクスプローラー等が貼り付け可能）。
 #[cfg(windows)]
 pub(crate) fn set_clipboard_files(paths: &[String]) -> Result<(), String> {

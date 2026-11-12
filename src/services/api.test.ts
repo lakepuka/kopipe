@@ -16,8 +16,10 @@ import {
   clearClips,
   type Clip,
   copyClip,
+  imageDataUrl,
   imageDirPath,
   imageStorageBytes,
+  imageThumbDataUrl,
   listTags,
   pasteClip,
   pasteText,
@@ -77,6 +79,15 @@ describe("api", () => {
     expect(mockInvoke).toHaveBeenCalledWith("paste_files", {
       paths: ["C:/a", "C:/b"],
     });
+  });
+
+  it("画像は一覧用の縮小版とプレビュー用の原寸で別コマンドを呼ぶ", () => {
+    imageThumbDataUrl(2);
+    expect(mockInvoke).toHaveBeenCalledWith("image_thumb_data_url", { id: 2 });
+
+    mockInvoke.mockClear();
+    imageDataUrl(2);
+    expect(mockInvoke).toHaveBeenCalledWith("image_data_url", { id: 2 });
   });
 
   it("pasteClip は HTML 付きならその html を渡す", () => {

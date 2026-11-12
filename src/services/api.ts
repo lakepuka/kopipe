@@ -32,7 +32,10 @@ export function searchClips(
 
 export const toggleBookmark = (id: number) => invoke("toggle_bookmark", { id });
 export const deleteClip = (id: number) => invoke("delete_clip", { id });
+// 原寸（プレビュー用）。一覧のサムネイルには使わない（大きな画像だと数十 MB になる）。
 export const imageDataUrl = (id: number) => invoke<string>("image_data_url", { id });
+// 一覧用の縮小版。
+export const imageThumbDataUrl = (id: number) => invoke<string>("image_thumb_data_url", { id });
 export const openSettings = () => invoke("open_settings");
 export const imageStorageBytes = () => invoke<number>("image_storage_bytes");
 export const imageDirPath = () => invoke<string>("image_dir_path");

@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 
-import { imageDataUrl } from "../services/api";
+import { imageDataUrl, imageThumbDataUrl } from "../services/api";
 import { useT } from "../i18n";
 
 // 画像クリップのサムネイル。表示時に data URL を遅延取得する（一覧クエリは軽いまま）。
+// 原寸ではなく Rust 側で縮小した版を受け取る（スクリーンショットだと原寸は数十 MB になる）。
+// 縮小できない形式のときだけ原寸にフォールバックする。
 export function ClipImage({ id, onClick }: { id: number; onClick: () => void }) {
   const t = useT();
   const [src, setSrc] = useState("");
 
   useEffect(() => {
     let alive = true;
-    imageDataUrl(id)
+    imageThumbDataUrl(id)
+      .catch(() => imageDataUrl(id))
       .then((s) => {
         if (alive) setSrc(s);
       })

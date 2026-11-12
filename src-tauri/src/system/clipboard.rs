@@ -69,7 +69,7 @@ pub fn paste_image(id: i64, app: AppHandle) -> Result<(), String> {
 
     let state = app.state::<crate::db::AppState>();
     let (path, hash) = crate::image_storage::image_path_and_hash(&state, id)?;
-    let (rgba, w, h) = decode_png(&path)?;
+    let (rgba, w, h) = crate::image_storage::decode_png(&path)?;
 
     app.clipboard()
         .write_image(&Image::new_owned(rgba, w, h))
@@ -152,6 +152,8 @@ pub(crate) fn setup_clipboard_monitor(app: &AppHandle) {
             .ok()
             .map(|im| hash_bytes(im.rgba()))
             .unwrap_or_default();
+        // 最後に読み終えた時点のクリップボード変更番号。
+        let mut seen_seq = super::win32::clipboard_sequence();
 
         loop {
             std::thread::sleep(Duration::from_millis(POLL_INTERVAL_MS));
@@ -163,8 +165,19 @@ pub(crate) fn setup_clipboard_monitor(app: &AppHandle) {
                 super::win32::capture_prev_focus();
             }
 
+            // 変更番号が前回のままなら中身は読まない。以前は毎回全形式を読み直しており、
+            // 画像が載ったままだと 700ms ごとに全ピクセルの RGBA 変換とハッシュ計算
+            // （4K で数十 MB）を延々と繰り返していた。
+            // 読めた形式があった回だけ「読み終えた」とする（他アプリが開いていて読めなかった
+            // 変更は次の周回で拾い直す）。
+            let seq = super::win32::clipboard_sequence();
+            if !clipboard_changed(seq, seen_seq) {
+                continue;
+            }
+
             // まずテキストを試す。読めたらこのラウンドはテキストとして処理。
             if let Ok(text) = app.clipboard().read_text() {
+                seen_seq = seq;
                 if !text.trim().is_empty() && text != last_text {
                     last_text = text.clone();
                     // 同じクリップにリッチ形式(HTML)があれば併せて保存する。
@@ -187,6 +200,7 @@ pub(crate) fn setup_clipboard_monitor(app: &AppHandle) {
             #[cfg(windows)]
             {
                 if let Some(files) = super::win32::read_clipboard_files() {
+                    seen_seq = seq;
                     let joined = files.join("\n");
                     if !joined.is_empty() && joined != last_files {
                         last_files = joined.clone();
@@ -204,6 +218,7 @@ pub(crate) fn setup_clipboard_monitor(app: &AppHandle) {
 
             // それも無ければ画像を試す。
             if let Ok(img) = app.clipboard().read_image() {
+                seen_seq = seq;
                 let rgba = img.rgba();
                 if rgba.is_empty() {
                     continue;
@@ -247,7 +262,7 @@ fn save_image_clip(
     height: u32,
     hash: &str,
 ) -> Result<(), String> {
-    let png = encode_png(rgba, width, height)?;
+    let png = crate::image_storage::encode_png(rgba, width, height)?;
     let path = dir.join(format!("{hash}.png"));
     std::fs::write(&path, &png).map_err(|e| e.to_string())?;
     let path_str = path.to_string_lossy().to_string();
@@ -260,30 +275,21 @@ fn hash_bytes(bytes: &[u8]) -> String {
     blake3::hash(bytes).to_hex().to_string()
 }
 
-/// RGBA8 ピクセルを PNG バイト列にエンコードする。
-fn encode_png(rgba: &[u8], width: u32, height: u32) -> Result<Vec<u8>, String> {
-    let mut buf = Vec::new();
-    {
-        let mut encoder = png::Encoder::new(&mut buf, width, height);
-        encoder.set_color(png::ColorType::Rgba);
-        encoder.set_depth(png::BitDepth::Eight);
-        let mut writer = encoder.write_header().map_err(|e| e.to_string())?;
-        writer.write_image_data(rgba).map_err(|e| e.to_string())?;
-    }
-    Ok(buf)
+/// 前回読み終えてからクリップボードが変わったか。変更番号が取れない環境では
+/// 判定できないので、従来どおり毎回読む（＝変わったとみなす）。（テスト対象）
+fn clipboard_changed(seq: Option<u32>, seen: Option<u32>) -> bool {
+    seq.is_none() || seq != seen
 }
 
-/// 保存した PNG を RGBA8 にデコードする（貼り戻し用）。kopipe が書いた PNG は常に RGBA8。
-fn decode_png(path: &str) -> Result<(Vec<u8>, u32, u32), String> {
-    let file = std::io::BufReader::new(std::fs::File::open(path).map_err(|e| e.to_string())?);
-    let mut reader = png::Decoder::new(file)
-        .read_info()
-        .map_err(|e| e.to_string())?;
-    let size = reader
-        .output_buffer_size()
-        .ok_or_else(|| "png buffer size unknown".to_string())?;
-    let mut buf = vec![0; size];
-    let info = reader.next_frame(&mut buf).map_err(|e| e.to_string())?;
-    buf.truncate(info.buffer_size());
-    Ok((buf, info.width, info.height))
+#[cfg(test)]
+mod tests {
+    use super::clipboard_changed;
+
+    #[test]
+    fn reads_only_when_sequence_moved() {
+        assert!(!clipboard_changed(Some(5), Some(5))); // 変化なし → 読まない
+        assert!(clipboard_changed(Some(6), Some(5))); // 変化あり
+        assert!(clipboard_changed(Some(5), None)); // 起動時に取れなかった → 読む
+        assert!(clipboard_changed(None, None)); // 取れない環境 → 毎回読む（従来動作）
+    }
 }
